@@ -56,6 +56,41 @@
   let uidN = 0;
   const uid = p => `${p}${++uidN}`;
 
+  // Krój szeryfowy. Domyślnie Noto Serif Display; do porównania z właścicielką
+  // wystarczy dopisać do adresu ?font=playfair, ?font=source albo ?font=bodoni
+  const FONT_ALTS = {
+    playfair: { q: 'Playfair+Display:ital,wght@0,400..700;1,400..700', fam: '"Playfair Display"', w: 460, wd: 540, wh: 430, vs: 'normal' },
+    source: { q: 'Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700', fam: '"Source Serif 4"', w: 470, wd: 560, wh: 420, vs: '"opsz" 60' },
+    bodoni: { q: 'Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700', fam: '"Bodoni Moda"', w: 420, wd: 500, wh: 400, vs: '"opsz" 30' }
+  };
+  const altFont = FONT_ALTS[new URLSearchParams(location.search).get('font')];
+  if (altFont) {
+    const l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = `https://fonts.googleapis.com/css2?family=${altFont.q}&display=swap`;
+    document.head.appendChild(l);
+    root.style.setProperty('--serif', `${altFont.fam},"Times New Roman",serif`);
+    root.style.setProperty('--serif-w', String(altFont.w));
+    root.style.setProperty('--serif-w-dark', String(altFont.wd));
+    root.style.setProperty('--serif-w-hero', String(altFont.wh));
+    root.style.setProperty('--serif-vs', altFont.vs);
+  }
+
+  // Polska typografia: jednoliterowe „w”, „z”, „i”, „o”, „a”, „u” nie zostają na końcu wiersza
+  function fixOrphans(scope) {
+    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => (n.parentElement && n.parentElement.closest('[lang="en"],script,style,svg,textarea')
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(n => {
+      const v = n.nodeValue.replace(/(^|[\s„(])([aiouwzAIOUWZ]) /g, '$1$2\u00A0');
+      if (v !== n.nodeValue) n.nodeValue = v;
+    });
+  }
+  fixOrphans(body);
+
   // Grubość linii rysunków w px, niezależnie od skali SVG
   const strokeTargets = [];
   const registerStroke = (svg, px) => strokeTargets.push({ svg, px });
@@ -209,10 +244,19 @@
     return out;
   }
 
-  // Mapa: prosta projekcja (szer./dł. geograficzna) w polu 520 × 400
-  const MAPK = Math.cos(49.5 * Math.PI / 180);
-  const MAPS = 36;
-  const geo = (lat, lon) => [(lon + 1) * MAPK * MAPS, (55 - lat) * MAPS];
+  // Mapa Europy: rzutowanie LAEA (10°E, 52°N) jak w js/europe.js, dane Natural Earth (domena publiczna)
+  const EU = window.STI_EUROPE || null;
+  const HOME = 'POL';
+  const SERVED = new Set(['DEU', 'NLD', 'BEL', 'FRA', 'LUX', 'AUT', 'CHE', 'ITA', 'ESP', 'DNK']);   // jak lista kierunków, do potwierdzenia
+  const RAD = Math.PI / 180;
+  const geo = (lat, lon) => {
+    if (!EU) return [(lon + 1) * 0.6494 * 36, (55 - lat) * 36];   // zapas, gdyby nie wczytał się europe.js
+    const f = lat * RAD, l = lon * RAD, f0 = EU.lat0 * RAD, l0 = EU.lon0 * RAD;
+    const k = Math.sqrt(2 / (1 + Math.sin(f0) * Math.sin(f) + Math.cos(f0) * Math.cos(f) * Math.cos(l - l0)));
+    const x = k * Math.cos(f) * Math.sin(l - l0);
+    const y = k * (Math.cos(f0) * Math.sin(f) - Math.sin(f0) * Math.cos(f) * Math.cos(l - l0));
+    return [EU.tx + x * EU.s, EU.ty - y * EU.s];
+  };
   const CITY = {
     Rybnik: [50.10, 18.55], Berlin: [52.52, 13.40], Monachium: [48.14, 11.58], Hamburg: [53.55, 9.99],
     Mediolan: [45.46, 9.19], Bruksela: [50.85, 4.35], Amsterdam: [52.37, 4.90], Lyon: [45.76, 4.84],
@@ -225,26 +269,40 @@
     const cx = (a[0] + b[0]) / 2 + nx * len * bend, cy = (a[1] + b[1]) / 2 + ny * len * bend;
     return `M${a[0].toFixed(1)} ${a[1].toFixed(1)}Q${cx.toFixed(1)} ${cy.toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
   }
+  const XLINK = 'http://www.w3.org/1999/xlink';
   function buildMap(box, opt) {
-    const o = Object.assign({ grid: true, routes: [], labels: {}, origin: 'Rybnik', bend: 0.16, r: 4.2 }, opt);
+    const o = Object.assign({ routes: [], labels: {}, origin: 'Rybnik', bend: 0.16, r: 4.2, movers: false }, opt);
     const svg = box.querySelector('svg');
-    const out = { routes: [], dots: new Map(), labels: new Map() };
-    if (o.grid) {
-      for (let lon = 0; lon <= 20; lon += 5) {
-        const a = geo(55.6, lon), b = geo(44.4, lon);
-        svgEl('path', { d: P.line(a[0].toFixed(1), a[1].toFixed(1), b[0].toFixed(1), b[1].toFixed(1)), class: 'grid' }, svg);
-      }
-      for (let lat = 45; lat <= 55; lat += 5) {
-        const a = geo(lat, -1), b = geo(lat, 20.6);
-        svgEl('path', { d: P.line(a[0].toFixed(1), a[1].toFixed(1), b[0].toFixed(1), b[1].toFixed(1)), class: 'grid' }, svg);
-      }
+    const out = { svg, routes: [], dots: new Map(), labels: new Map() };
+    if (EU) {   // podkład: ląd, granice, siatka; krawędzie gasną maską
+      const base = svgEl('svg', { class: 'map__base', viewBox: `0 0 ${EU.w} ${EU.h}`, 'aria-hidden': 'true' });
+      box.insertBefore(base, svg);
+      svgEl('path', { d: EU.grid, class: 'map__grid' }, base);
+      EU.land.forEach(([id, d]) => svgEl('path', { d, class: 'map__land' + (id === HOME ? ' is-home' : SERVED.has(id) ? ' is-served' : '') }, base));
     }
     const firstIdx = new Map();
+    const movers = [];
     o.routes.forEach(([from, to], i) => {
-      const path = svgEl('path', { d: arcPath(geo(...CITY[from]), geo(...CITY[to]), o.bend), class: 'route', pathLength: '1', style: `--ri:${i}` }, svg);
-      out.routes.push({ path, to });
+      const id = uid('route');
+      const path = svgEl('path', { id, d: arcPath(geo(...CITY[from]), geo(...CITY[to]), o.bend), class: 'route', pathLength: '1', style: `--ri:${i}` }, svg);
+      const r = { path, to, mover: null };
+      if (o.movers) {   // ciężarówka jako świecący punkt jadący po trasie
+        const g = svgEl('g', { class: 'map__mover', style: `--ri:${i}` });
+        const inner = svgEl('g', { opacity: '0' }, g);
+        svgEl('circle', { r: '6', class: 'map__halo' }, inner);
+        svgEl('circle', { r: '2.5', class: 'map__truck' }, inner);
+        const begin = (0.3 + i * 0.55).toFixed(2) + 's';
+        svgEl('set', { attributeName: 'opacity', to: '1', begin, fill: 'freeze' }, inner);
+        const am = svgEl('animateMotion', { dur: (5.5 + (i % 4) * 1.4).toFixed(1) + 's', begin, repeatCount: 'indefinite' }, inner);
+        const mp = svgEl('mpath', { href: '#' + id }, am);
+        mp.setAttributeNS(XLINK, 'xlink:href', '#' + id);
+        r.mover = g;
+        movers.push(g);
+      }
+      out.routes.push(r);
       if (!firstIdx.has(to)) firstIdx.set(to, i);
     });
+    movers.forEach(g => svg.appendChild(g));
     firstIdx.forEach((i, name) => {
       if (name === o.origin) return;
       const [x, y] = geo(...CITY[name]);
@@ -264,8 +322,14 @@
       box.appendChild(l);
       out.labels.set(name, l);
     });
+    if (svg.pauseAnimations) svg.pauseAnimations();   // ruch włączamy dopiero, gdy mapa jest widoczna
     return out;
   }
+  const setPlaying = (m, on) => {
+    if (!m.svg.pauseAnimations || m.playing === on || RM) return;
+    m.playing = on;
+    if (on) m.svg.unpauseAnimations(); else m.svg.pauseAnimations();
+  };
 
   /* =====================================================
      3. Hero
@@ -475,7 +539,7 @@
   const heroMap = buildMap($('#heroMap'), {
     routes: ['Berlin', 'Monachium', 'Hamburg', 'Mediolan', 'Bruksela', 'Amsterdam', 'Lyon', 'Paryż'].map(c => ['Rybnik', c]),
     labels: { Rybnik: 'r', Berlin: 'r', Monachium: 'r', Hamburg: 'r', Mediolan: 'r', Bruksela: 'l', Amsterdam: 'l', Lyon: 'l', 'Paryż': 'l' },
-    r: 4.6
+    r: 4.6, movers: true
   });
   const track = $('#track');
   const digits = $$('#trackTime .d');
@@ -490,6 +554,7 @@
       const dot = heroMap.dots.get(r.to), lab = heroMap.labels.get(r.to);
       if (dot) dot.style.opacity = d;
       if (lab) lab.style.opacity = d;
+      if (r.mover) r.mover.style.opacity = d;
     }),
     t => {
       const k = clamp(t / 0.62), e = easeInOut(k);
@@ -515,6 +580,21 @@
   const heroS = { cur: 0, target: 0 };
 
   const activeSlot = () => (getComputedStyle(slotBlock).display !== 'none' ? slotBlock : slotInline);
+  const heroTitle = $('.hero__title');
+  const titleLines = $$('.hero__title .line');
+  function fitTitle() {
+    heroTitle.style.fontSize = '100px';
+    let widest = 0;
+    titleLines.forEach(l => {
+      widest = Math.max(widest, l.firstElementChild.offsetWidth + (parseFloat(getComputedStyle(l).paddingLeft) || 0));
+    });
+    const availW = copy.clientWidth - 2 * padPx;
+    const sh = stage.clientHeight;
+    const block = getComputedStyle(slotBlock).display !== 'none';
+    const hCap = block ? sh * 0.38 / 2.85 : (sh - 250) / 2.9;
+    const fs = Math.max(34, Math.min(availW / Math.max(1, widest) * 98, hCap, 240));
+    heroTitle.style.fontSize = fs.toFixed(1) + 'px';
+  }
   function measureSlot() {
     const sr = stage.getBoundingClientRect();
     const el = activeSlot();
@@ -571,6 +651,7 @@
       const t = clamp((p - a) / (b - a));
       bars[i].style.setProperty('--f', t.toFixed(3));
       actUpdate[i](RM ? (op > 0 ? 1 : 0) : t);
+      if (i === 1) setPlaying(heroMap, op > 0.01);
     });
 
     // świt w trzecim akcie, razem z zegarem 05:48
@@ -595,9 +676,10 @@
   const stSec = $('#o-nas');
   const stText = $('#statementText');
   const stFoot = $('#statementFoot');
+  const stStage = $('.statement__stage');
   const stWords = [];
   {
-    const words = stText.textContent.trim().split(/\s+/);
+    const words = stText.textContent.trim().split(/[ \t\n\r]+/);
     stText.textContent = '';
     words.forEach((w, i) => {
       const s = document.createElement('span');
@@ -618,6 +700,7 @@
       stFilled = n;
     }
     stFoot.style.setProperty('--foot', (RM ? 1 : easeOut(clamp((p - 0.66) / 0.18))).toFixed(3));
+    if (!RM) stStage.style.setProperty('--wm', ((0.5 - p) * 90).toFixed(1) + 'px');
   }
 
   // Flota: zestaw wjeżdża, palety się ładują, rysują się wymiary
@@ -689,13 +772,14 @@
     if (kind === 'ltl') { buildTruck(el, { tractor: false, pallets: 'mixed', ground: true }); registerStroke(el, 1.2); }
     if (kind === 'van') { buildVan(el); registerStroke(el, 1.2); }
     if (kind === 'net') {
-      buildMap(el, {
+      const netMap = buildMap(el, {
         routes: [['Rybnik', 'Berlin'], ['Rybnik', 'Monachium'], ['Rybnik', 'Frankfurt'], ['Berlin', 'Hamburg'], ['Hamburg', 'Amsterdam'],
           ['Amsterdam', 'Rotterdam'], ['Rotterdam', 'Bruksela'], ['Frankfurt', 'Kolonia'], ['Kolonia', 'Bruksela'], ['Bruksela', 'Paryż'],
           ['Frankfurt', 'Zurych'], ['Monachium', 'Zurych'], ['Paryż', 'Lyon'], ['Lyon', 'Mediolan'], ['Zurych', 'Mediolan']],
         labels: { Rybnik: 'r', Berlin: 'r', Hamburg: 'r', Amsterdam: 'l', 'Paryż': 'l', Lyon: 'l', Mediolan: 'r', Monachium: 'r', Frankfurt: 'r' },
-        bend: 0.1, r: 4
+        bend: 0.1, r: 4, movers: true
       });
+      new IntersectionObserver(([e]) => setPlaying(netMap, e.isIntersecting)).observe(el);
     }
   });
 
@@ -788,12 +872,14 @@
     menu.classList.toggle('is-open', open);
     menuBtn.setAttribute('aria-expanded', String(open));
     body.classList.toggle('menu-open', open);
+    if (lenis) { if (open) lenis.stop(); else lenis.start(); }
     (open ? menuClose : menuBtn).focus({ preventScroll: true });
   }
   menuBtn.addEventListener('click', () => setMenu(true));
   menuClose.addEventListener('click', () => setMenu(false));
   menu.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.classList.contains('is-open')) setMenu(false); });
+  $$('a[href="#"]').forEach(a => a.addEventListener('click', e => e.preventDefault()));
 
   // Lista krajów do potwierdzenia z właścicielką
   const PLACES = ['Polska', 'Niemcy', 'Holandia', 'Belgia', 'Francja', 'Luksemburg', 'Austria', 'Szwajcaria', 'Włochy', 'Hiszpania', 'Dania'];
@@ -813,6 +899,25 @@
   /* =====================================================
      6. Pętla animacji, pomiary, preloader, start
      ===================================================== */
+  // Lenis wygładza przewijanie kółkiem i gładzikiem; na dotyku zostaje natywne przewijanie
+  let lenis = null;
+  if (!RM && typeof window.Lenis === 'function') {
+    lenis = new window.Lenis({ autoRaf: true, lerp: 0.085, wheelMultiplier: 0.9, anchors: true });
+    lenis.stop();
+  }
+  const DK = lenis ? 2.4 : 1;   // gdy działa Lenis, własne wygładzanie animacji jest lżejsze
+
+  // Nagłówek chowa się przy przewijaniu w dół i wraca przy przewijaniu w górę (poza hero)
+  let lastY = window.scrollY, headerHidden = false;
+  function headerAutoHide(y) {
+    const inHero = heroTop + heroH - y > headerH;
+    let hide = headerHidden;
+    if (inHero || menu.classList.contains('is-open') || y < 10) hide = false;
+    else if (y - lastY > 4) hide = true;
+    else if (y - lastY < -4) hide = false;
+    if (hide !== headerHidden) { header.classList.toggle('is-hidden', hide); headerHidden = hide; }
+    lastY = y;
+  }
   const near = (top, h, y) => y + vh * 1.4 > top && y - vh * 0.4 < top + h;
   function follow(s, target, lambda, dt) {
     s.target = target;
@@ -839,18 +944,19 @@
       if (now > introStart + 1500) { introRunning = false; introT = 1; measureSlot(); }
       busy = true;
     }
-    busy = follow(heroS, clamp((y - heroTop) / Math.max(1, heroH - vh)), 9, dt) || busy;
+    busy = follow(heroS, clamp((y - heroTop) / Math.max(1, heroH - vh)), 9 * DK, dt) || busy;
     if (near(heroTop, heroH, y)) renderHero(heroS.cur);
     headerState(y, heroS.cur);
+    headerAutoHide(y);
 
     if (near(stTop, stH, y)) renderStatement(y);
 
-    busy = follow(fleetS, clamp((y - fleetTop) / Math.max(1, fleetH - vh)), 7, dt) || busy;
+    busy = follow(fleetS, clamp((y - fleetTop) / Math.max(1, fleetH - vh)), 7 * DK, dt) || busy;
     if (near(fleetTop, fleetH, y)) renderFleet(fleetS.cur);
 
     if (near(servTop, servH, y)) renderServices();
 
-    busy = follow(procS, clamp((y - procTop) / Math.max(1, procH - vh)), 8, dt) || busy;
+    busy = follow(procS, clamp((y - procTop) / Math.max(1, procH - vh)), 8 * DK, dt) || busy;
     if (near(procTop, procH, y)) renderProcess(procS.cur);
 
     renderTheme(y);
@@ -864,6 +970,7 @@
     headerH = header.offsetHeight;
     heroTop = pageTop(hero); heroH = hero.offsetHeight;
     padPx = parseFloat(getComputedStyle(copy).paddingLeft) || 20;
+    fitTitle();
     measureSlot();
     stTop = pageTop(stSec); stH = stSec.offsetHeight;
     fleetTop = pageTop(fleetSec); fleetH = fleetSec.offsetHeight;
@@ -897,6 +1004,7 @@
   let fontsDone = false, shown = 0, finished = false;
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
     .then(() => { fontsDone = true; if (finished) { measure(); kick(); } }, () => { fontsDone = true; });
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { if (finished) { measure(); kick(); } });
 
   function loaderStep(now) {
     const el = now - t0;
@@ -918,10 +1026,11 @@
     loader.classList.add('is-done');
     body.classList.remove('is-loading');
     body.classList.add('is-ready');
+    if (lenis) lenis.start();
     if (RM) introT = 1;
     else { introStart = performance.now() + 620; introRunning = true; }
     const target = location.hash && document.getElementById(location.hash.slice(1));
-    if (target) window.scrollTo(0, pageTop(target));
+    if (target) { if (lenis) lenis.scrollTo(target, { immediate: true }); else window.scrollTo(0, pageTop(target)); }
     kick();
     startRoad();
     setTimeout(() => { loader.remove(); measure(); kick(); }, 1300);
