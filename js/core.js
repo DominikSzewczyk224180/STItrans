@@ -168,8 +168,8 @@ window.STI = (() => {
   /* =====================================================
      2. Rysunki SVG
      ===================================================== */
-  const LOGO = BASE + 'assets/logo-lockup.png';
-  const LOGO_W = BASE + 'assets/logo-lockup-white.png';
+  const LOGO = BASE + 'assets/logo-lockup.svg';
+  const LOGO_W = BASE + 'assets/logo-lockup-white.svg';
   const easeIn = t => t * t * t;
   const WHEEL_R = 52;
   const WHEEL_Y = 348;
@@ -482,6 +482,23 @@ window.STI = (() => {
   };
 
 
+  /* ---------- logo: na komputerze duże na górze strony, maleje razem z przewijaniem ---------- */
+  const brandEl = $('.site-header .brand'), logoEl = brandEl && $('.logo', brandEl);
+  const LOGO_BAR = 34;          // wysokość logo w pasku nagłówka
+  let logoTop = 0;
+  const wideHeader = () => window.innerWidth > 1080;
+  function measureLogo() { logoTop = logoEl ? logoEl.offsetHeight : 0; }
+  function renderLogo(y) {
+    if (!brandEl) return;
+    if (!wideHeader() || !logoTop) { brandEl.style.transform = ''; return; }
+    const t = easeInOut(clamp(y / 260));
+    brandEl.style.transform = `scale(${lerp(1, LOGO_BAR / logoTop, t).toFixed(4)})`;
+  }
+  // ile miejsca duże logo zajmuje poniżej paska nagłówka (hasło na stronie głównej musi się zmieścić niżej)
+  const logoRoom = headerH => (wideHeader() && logoTop ? Math.max(0, 21 + logoTop - headerH) : 0);
+  measureLogo();
+  window.addEventListener('resize', () => { measureLogo(); renderLogo(window.scrollY); });
+
   /* ---------- przełącznik języka ---------- */
   function setLang(lang) {
     if (!LANGS.includes(lang) || lang === LANG) return;
@@ -551,6 +568,6 @@ window.STI = (() => {
     NS, svgEl, P, uid, I18N, LANGS, PL_T, norm, orphanize, has, tr, fill, i18nHooks, srcText, applyTexts, setLang,
     lang: () => LANG, registerStroke, updateStrokes, LOGO, LOGO_W, WHEEL_R, WHEEL_Y,
     buildTruck, buildVan, buildLoadPlan, buildCoils, buildStopwatch, EU, geo, CITY, buildMap, setPlaying,
-    setMenu, splitWords, revealIO
+    setMenu, splitWords, revealIO, renderLogo, measureLogo, logoRoom
   });
 })();

@@ -12,13 +12,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,400..700;1,400..700&family=Mulish:wght@300..800&display=swap">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=ac2a2925">
 <!-- Płynne przewijanie (Lenis, MIT), dane mapy (Natural Earth, domena publiczna), tłumaczenia EN/DE, logika strony -->
-<script src="js/vendor/lenis.min.js" defer></script>
-<script src="js/europe.js" defer></script>
-<script src="js/i18n.js" defer></script>
-<script src="js/core.js" defer></script>
-<script src="js/main.js" defer></script>
+<script src="js/vendor/lenis.min.js?v=bc6fcb5d" defer></script>
+<script src="js/europe.js?v=ae457714" defer></script>
+<script src="js/i18n.js?v=0e8c190f" defer></script>
+<script src="js/core.js?v=a8fbc933" defer></script>
+<script src="js/main.js?v=75813fa7" defer></script>
 </head>
 <body class="is-loading">
 <a class="skip" href="#o-nas">Przejdź do treści</a>
@@ -75,7 +75,7 @@
 </div>
 
 <!-- Postęp strony: cienka szyna z sekcjami (kliknięcie przenosi do sekcji) -->
-<nav class="rail" id="rail" aria-label="Sekcje strony">
+<nav class="rail" id="rail" aria-label="Sekcje strony" hidden>
   <span class="rail__track" aria-hidden="true"><i class="rail__fill" id="railFill"></i></span>
   <ol class="rail__list">
     <li><a href="#top" data-sec="top"><span class="rail__label">Start</span><span class="rail__dot"></span></a></li>
@@ -89,7 +89,7 @@
     <li><a href="#wycena" data-sec="wycena"><span class="rail__label">Wycena</span><span class="rail__dot"></span></a></li>
   </ol>
 </nav>
-<div class="cue" id="cue" aria-hidden="true"><span class="cue__icon"><i></i></span><span class="cue__text">Przewiń dalej</span></div>
+<div class="cue" id="cue" aria-hidden="true" hidden><span class="cue__icon"><i></i></span><span class="cue__text">Przewiń dalej</span></div>
 
 <main id="top">
 
