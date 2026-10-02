@@ -109,22 +109,42 @@
             <h2 class="act__title" lang="en">Everything.</h2>
             <p class="act__text">Pełne ładunki, drobnica i przesyłki ekspresowe. Do każdego zlecenia dobieramy pojazd i trasę.</p>
           </div>
-          <div class="act__aside act__aside--spec">
-            <ul class="spec glass" id="spec">
-              <li><span class="spec__k">FTL</span><span class="spec__v"><b>Transport całopojazdowy</b>Cała naczepa 13,6 m, do 33 palet EUR</span></li>
-              <li><span class="spec__k">LTL</span><span class="spec__v"><b>Transport drobnicowy</b>Od jednej palety, ładunki łączone</span></li>
-              <li><span class="spec__k">EXP</span><span class="spec__v"><b>Transport ekspresowy</b>Jeden pojazd, jeden ładunek, bez przeładunku</span></li>
-            </ul>
+          <div class="act__aside act__aside--modes">
+            <div class="modes glass" id="modes">
+              <div class="modes__tabs" aria-hidden="true"><span class="is-on">FTL</span><span>LTL</span><span>Ekspres</span></div>
+              <div class="modes__art">
+                <svg class="truck truck--glass is-on" data-mode-art="ftl" viewBox="-30 -40 1740 470" aria-hidden="true"></svg>
+                <svg class="truck truck--glass" data-mode-art="ltl" viewBox="-30 -40 1740 470" aria-hidden="true"></svg>
+                <svg class="truck truck--glass" data-mode-art="exp" viewBox="-250 -30 920 360" aria-hidden="true"></svg>
+              </div>
+              <div class="modes__copy">
+                <div class="mode is-on">
+                  <h3 class="mode__title">Transport całopojazdowy</h3>
+                  <p class="mode__text">Pełen ładunek. Pełna odpowiedzialność.</p>
+                  <ul class="mode__facts"><li>Naczepa 13,6 m</li><li>33 palety EUR</li><li>do 24 t</li></ul>
+                </div>
+                <div class="mode">
+                  <h3 class="mode__title">Transport częściowy</h3>
+                  <p class="mode__text">Elastyczność, która się opłaca. Płacisz za miejsce, które zajmuje Twój towar.</p>
+                  <ul class="mode__facts"><li>od 1 palety</li><li>ładunki łączone</li><li>niższy koszt</li></ul>
+                </div>
+                <div class="mode">
+                  <h3 class="mode__title">Transport ekspresowy</h3>
+                  <p class="mode__text">Działamy wtedy, gdy inni jeszcze planują.</p>
+                  <ul class="mode__facts"><li>dedykowany pojazd</li><li>bez przeładunku</li><li>just in time</li></ul>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
 
         <article class="act">
           <div class="act__caption">
             <h2 class="act__title" lang="en">Everywhere.</h2>
-            <p class="act__text">Polska i Europa Zachodnia. Znamy drogę, niezależnie od kierunku.</p>
+            <p class="act__text">Polska, Czechy, Słowacja, Niemcy, Benelux, północne Włochy i Francja, Dania. Znamy drogę, niezależnie od kierunku.</p>
           </div>
           <div class="act__aside act__aside--map">
-            <div class="map" id="heroMap" role="img" aria-label="Trasy z Rybnika do Hamburga, Berlina, Amsterdamu, Brukseli, Paryża, Lyonu, Mediolanu i Monachium">
+            <div class="map" id="heroMap" role="img" aria-label="Trasy z Rybnika do Berlina, Pragi, Bratysławy, Monachium, Hamburga, Koldingu, Mediolanu, Rotterdamu, Antwerpii i Paryża">
               <svg viewBox="0 0 520 400" aria-hidden="true"></svg>
             </div>
           </div>
@@ -137,7 +157,7 @@
           </div>
           <div class="act__aside act__aside--track">
             <div class="track" id="track">
-              <p class="track__label">Przykładowy kurs</p>
+              <div class="track__head"><p class="track__label">Przykładowy kurs</p><span class="track__live"><i></i>GPS 24/7</span></div>
               <div class="track__route">
                 <span>Rybnik</span>
                 <span class="track__line">
@@ -149,12 +169,13 @@
               </div>
               <p class="track__time" id="trackTime" aria-hidden="true"><span class="d">2</span><span class="d">1</span><span class="c">:</span><span class="d">3</span><span class="d">0</span></p>
               <p class="track__status"><span class="run">W drodze, plan rozładunku 06:00</span><span class="done">Rozładunek 05:48, 12 minut przed planem</span></p>
-              <p class="sr-only">Wyjazd 21:30, rozładunek 05:48, czyli 12 minut przed planem.</p>
-              <dl class="track__rows">
-                <div><dt>Wyjazd</dt><dd>21:30</dd></div>
-                <div><dt>Plan rozładunku</dt><dd>06:00</dd></div>
-                <div><dt>Status</dt><dd>GPS 24/7</dd></div>
-              </dl>
+              <ol class="track__stops" id="trackStops">
+                <li data-t="1290"><span class="track__stop">Rybnik</span><span class="track__note">załadunek</span><time>21:30</time></li>
+                <li data-t="1450"><span class="track__stop">Wrocław</span><span class="track__note">A4</span><time>00:10</time></li>
+                <li data-t="1580"><span class="track__stop">Olszyna</span><span class="track__note">granica PL/DE</span><time>02:20</time></li>
+                <li data-t="1788"><span class="track__stop">Berlin</span><span class="track__note">rozładunek</span><time>05:48</time></li>
+              </ol>
+              <p class="sr-only">Wyjazd z Rybnika 21:30, Wrocław 00:10, granica w Olszynie 02:20, rozładunek w Berlinie 05:48, czyli 12 minut przed planem.</p>
             </div>
           </div>
         </article>
@@ -170,8 +191,12 @@
     <div class="statement__stage">
       <h2 class="statement__text" id="statementText">Doświadczenie z największych firm logistycznych. Elastyczność niezależnego przewoźnika.</h2>
       <div class="statement__foot" id="statementFoot">
-        <p>STItrans tworzą specjaliści branży TSL. Łączymy standardy dużych operatorów z szybkością decyzji, na jaką stać tylko niezależną firmę.</p>
-        <a class="link has-roll" href="#wycena"><span class="roll"><span class="roll__in"><span>Porozmawiajmy o Twoim ładunku</span><span aria-hidden="true">Porozmawiajmy o Twoim ładunku</span></span></span></a>
+        <dl class="stats">
+          <div><dt>zrealizowanych transportów</dt><dd><span data-count="1007" data-prefix="+">+1 007</span></dd></div>
+          <div><dt>terminowych dostaw</dt><dd><span data-count="100">100</span>%</dd></div>
+          <div><dt>stałych klientów</dt><dd><span data-count="74">74</span></dd></div>
+          <div><dt>monitoring przesyłek</dt><dd>24/7</dd></div>
+        </dl>
       </div>
     </div>
   </section>
@@ -181,18 +206,35 @@
     <div class="fleet__stage">
       <div class="fleet__head">
         <h2 class="section-title" id="fleetTitle" data-split>Każdy centymetr naczepy pracuje.</h2>
-        <p class="section-lead" data-reveal>Nowoczesne ciągniki i naczepy pod stałą kontrolą GPS. Ładunki planujemy tak, żeby nie wozić powietrza.</p>
+        <p class="section-lead" data-reveal>Ciągniki MAN i naczepy Wielton MEGA z muldą na stal w kręgach. Wozimy stal, papier i towary paletowe, każdy kurs pod kontrolą GPS.</p>
       </div>
       <dl class="fleet__stats" data-reveal>
         <div><dt>palety EUR w jednej naczepie</dt><dd><span id="statPallets">0</span></dd></div>
         <div><dt>ładunku w jednym kursie</dt><dd><small>do</small> <span id="statTons">0</span> t</dd></div>
-        <div><dt>przestrzeni ładunkowej</dt><dd><span id="statVol">0</span> m³</dd></div>
+        <div><dt>w naczepie MEGA</dt><dd><span id="statVol">0</span> m³</dd></div>
       </dl>
       <div class="fleet__drawing" id="fleetDrawing">
         <svg class="truck" id="fleetTruck" viewBox="-40 -110 1860 610" aria-hidden="true"></svg>
       </div>
-      <p class="sr-only">Ciągnik siodłowy z naczepą: długość zestawu 16,5 m, naczepa 13,6 m, wysokość 4 m, 33 palety EUR.</p>
+      <p class="sr-only">Ciągnik siodłowy z naczepą MEGA: długość zestawu 16,5 m, naczepa 13,6 m, wysokość 4 m, 33 palety EUR, mulda na stal w kręgach.</p>
     </div>
+  </section>
+
+  <!-- ============ 3b. Dlaczego STItrans: sześć powodów ============ -->
+  <section class="why" id="dlaczego-stitrans" aria-labelledby="whyTitle">
+    <div class="why__head">
+      <h2 class="section-title" id="whyTitle" data-split>Dlaczego warto wybrać STItrans?</h2>
+      <p class="section-lead" data-reveal>STItrans tworzą specjaliści branży TSL. Łączymy wieloletnie doświadczenie z indywidualnym podejściem: Ty skupiasz się na swoim biznesie, my dbamy o terminowość, bezpieczeństwo i koszty transportu.</p>
+      <a class="btn has-roll" href="#wycena" data-reveal><span class="roll"><span class="roll__in"><span>Poproś o wycenę</span><span aria-hidden="true">Poproś o wycenę</span></span></span></a>
+    </div>
+    <ol class="why__list">
+      <li><span class="why__num">01</span><div><h3 class="why__title">Terminowość dostaw</h3><p>Punktualne dostawy zgodne z harmonogramem. Planujesz swój biznes bez obaw o opóźnienia.</p></div></li>
+      <li><span class="why__num">02</span><div><h3 class="why__title">Bezpieczeństwo ładunków</h3><p>Każdy kurs śledzimy przez całą dobę. Wiesz, gdzie jest towar i kiedy dotrze.</p></div></li>
+      <li><span class="why__num">03</span><div><h3 class="why__title">Nowoczesna flota</h3><p>Regularnie serwisowane ciągniki MAN i naczepy MEGA, spełniające rygorystyczne normy ekologiczne i techniczne.</p></div></li>
+      <li><span class="why__num">04</span><div><h3 class="why__title">Indywidualne podejście</h3><p>Każde zlecenie traktujemy osobno i dopasowujemy rozwiązanie do Twoich potrzeb.</p></div></li>
+      <li><span class="why__num">05</span><div><h3 class="why__title">Optymalizacja kosztów</h3><p>Stale poprawiamy efektywność naszych procesów, więc oferujemy konkurencyjne ceny bez kompromisów w jakości.</p></div></li>
+      <li><span class="why__num">06</span><div><h3 class="why__title">Profesjonalizm i doświadczenie</h3><p>Nasz zespół zdobywał doświadczenie w najlepszych firmach branży TSL.</p></div></li>
+    </ol>
   </section>
 
   <!-- ============ 4. Oferta: karty układające się w stos ============ -->
@@ -207,6 +249,7 @@
         <div class="card__text">
           <p class="card__num"><span>01</span>FTL</p>
           <h3 class="card__title">Transport całopojazdowy</h3>
+          <p class="card__tag">Pełen ładunek. Pełna odpowiedzialność.</p>
           <p class="card__desc">Cała naczepa tylko dla Twojego ładunku. Jedziemy bezpośrednio od nadawcy do odbiorcy, bez przeładunków po drodze.</p>
           <ul class="card__facts">
             <li>Naczepa 13,6 m, do 33 palet EUR</li>
@@ -222,6 +265,7 @@
         <div class="card__text">
           <p class="card__num"><span>02</span>LTL</p>
           <h3 class="card__title">Transport drobnicowy</h3>
+          <p class="card__tag">Elastyczność, która się opłaca.</p>
           <p class="card__desc">Płacisz za miejsce, które zajmuje Twój towar. Łączymy ładunki kilku nadawców jadące w tym samym kierunku.</p>
           <ul class="card__facts">
             <li>Od jednej palety</li>
@@ -240,6 +284,7 @@
         <div class="card__text">
           <p class="card__num"><span>03</span>Ekspres</p>
           <h3 class="card__title">Transport ekspresowy</h3>
+          <p class="card__tag">Działamy wtedy, gdy inni jeszcze planują.</p>
           <p class="card__desc">Kiedy liczą się godziny. Dedykowany pojazd jedzie najkrótszą trasą, bez dodatkowych przystanków.</p>
           <ul class="card__facts">
             <li>Dedykowany pojazd</li>
@@ -255,7 +300,8 @@
         <div class="card__text">
           <p class="card__num"><span>04</span>Spedycja</p>
           <h3 class="card__title">Spedycja międzynarodowa</h3>
-          <p class="card__desc">Organizujemy transport w całej Europie Zachodniej, także z udziałem sprawdzonych przewoźników partnerskich.</p>
+          <p class="card__tag">Znamy drogę. Niezależnie od kierunku.</p>
+          <p class="card__desc">Kompleksowo organizujemy przewóz, od planowania po dostawę. Nasi spedytorzy zadbają o formalności i płynny przebieg transportu.</p>
           <ul class="card__facts">
             <li>Jedno zlecenie, pełna organizacja</li>
             <li>Dokumenty przewozowe i CMR</li>
@@ -281,10 +327,71 @@
           <li class="step"><span class="step__num">01</span><h3 class="step__title">Zapytanie</h3><p>Trasa, termin i rodzaj ładunku. Tyle wystarczy, żebyśmy mogli zacząć.</p></li>
           <li class="step"><span class="step__num">02</span><h3 class="step__title">Oferta</h3><p>Dostajesz konkretną cenę i termin realizacji, bez zgadywania.</p></li>
           <li class="step"><span class="step__num">03</span><h3 class="step__title">Załadunek</h3><p>Podstawiamy pojazd dopasowany do towaru i potwierdzamy godzinę załadunku.</p></li>
-          <li class="step"><span class="step__num">04</span><h3 class="step__title">Dostawa</h3><p>Monitorujemy kurs przez całą dobę i informujemy o statusie aż do rozładunku.</p></li>
+          <li class="step"><span class="step__num">04</span><h3 class="step__title">Dostawa<span class="step__badge">Dostarczono</span></h3><p>Monitorujemy kurs przez całą dobę i informujemy o statusie aż do rozładunku.</p></li>
         </ol>
       </div>
-      <div class="process__truck" id="processTruck"><svg class="truck" viewBox="-30 -40 1740 460" aria-hidden="true"></svg></div>
+      <div class="process__lane"><div class="process__truck" id="processTruck"><svg class="truck" viewBox="-30 -40 1740 460" aria-hidden="true"></svg></div></div>
+    </div>
+  </section>
+
+  <!-- ============ 5b. Kariera: kierowcy C+E (treść ze stitrans.pl/kariera) ============ -->
+  <section class="career" id="kariera" aria-labelledby="careerTitle">
+    <div class="career__intro">
+      <h2 class="section-title" id="careerTitle" data-split>Zatrudniamy kierowców C+E.</h2>
+      <p class="section-lead" data-reveal>Stabilna współpraca B2B w transporcie międzynarodowym. Nowoczesny sprzęt, dedykowany spedytor i jasne zasady od pierwszego dnia.</p>
+      <p class="career__pay" data-reveal><small>Wynagrodzenie</small><strong>do 17&nbsp;500&nbsp;zł</strong><span>brutto miesięcznie, w zależności od systemu pracy</span></p>
+      <div class="career__cta" data-reveal>
+        <a class="btn has-roll" href="tel:+48723327526"><span class="roll"><span class="roll__in"><span>Zadzwoń: 723 327 526</span><span aria-hidden="true">Zadzwoń: 723 327 526</span></span></span></a>
+        <a class="link has-roll" href="mailto:job@stitrans.pl"><span class="roll"><span class="roll__in"><span>job@stitrans.pl</span><span aria-hidden="true">job@stitrans.pl</span></span></span></a>
+      </div>
+    </div>
+    <div class="career__card" data-reveal>
+      <div class="career__art"><svg class="truck" id="careerCab" viewBox="1040 -50 700 470" aria-hidden="true"></svg></div>
+      <dl class="career__facts">
+        <div><dt>System pracy</dt><dd>Co drugi weekend w domu (dedykowany pojazd), 2/2 lub 3/1 (pojazd współdzielony), elastycznie dla obcokrajowców</dd></div>
+        <div><dt>Sprzęt</dt><dd>Ciągniki MAN, naczepy Wielton MEGA z muldą</dd></div>
+        <div><dt>Ładunki</dt><dd>Głównie stal i papier, palety bez wymiany</dd></div>
+        <div><dt>Kierunki</dt><dd>Polska, Czechy, Słowacja, Niemcy, Benelux, północne Włochy i Francja, Dania</dd></div>
+        <div><dt>Na bazie</dt><dd>Myjnia, sanitariaty, sklep w pobliżu</dd></div>
+        <div><dt>Wsparcie</dt><dd>Dedykowany spedytor i system Transics</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ 5c. Blog: wpisy ze stitrans.pl ============ -->
+  <section class="blog" id="blog" aria-labelledby="blogTitle">
+    <div class="blog__head">
+      <h2 class="section-title" id="blogTitle" data-split>Wiedza z trasy.</h2>
+      <a class="link has-roll" href="https://stitrans.pl/blog"><span class="roll"><span class="roll__in"><span>Wszystkie wpisy</span><span aria-hidden="true">Wszystkie wpisy</span></span></span></a>
+    </div>
+    <div class="blog__grid">
+      <article class="post" data-reveal>
+        <a class="post__link" href="https://stitrans.pl/ftl-czy-ltl-ktory-transport-bardziej-sie-oplaca-sti-trans/">
+          <div class="post__cover"><svg class="truck truck--night" data-cover="ltl" viewBox="-60 -60 1480 520" aria-hidden="true"></svg></div>
+          <p class="post__tag">FTL i LTL</p>
+          <h3 class="post__title">FTL vs LTL – który rodzaj transportu opłaca się Twojej firmie?</h3>
+          <p class="post__excerpt">Wybór między transportem całopojazdowym a częściowym ma realny wpływ na koszty, czas dostawy i sprawność łańcucha dostaw.</p>
+          <span class="post__more">Czytaj wpis</span>
+        </a>
+      </article>
+      <article class="post" data-reveal>
+        <a class="post__link" href="https://stitrans.pl/najlepszy-partner-transportowy-dla-firm-produkcyjnych-i-importerow-stali-stitrans/">
+          <div class="post__cover"><svg class="truck truck--night" data-cover="coil" viewBox="0 0 640 340" aria-hidden="true"></svg></div>
+          <p class="post__tag">Stal i produkcja</p>
+          <h3 class="post__title">Dlaczego firmy produkcyjne oraz importerzy stali stawiają na STItrans jako swojego partnera transportowego?</h3>
+          <p class="post__excerpt">Firmy z branży produkcyjnej i dystrybucyjnej potrzebują więcej niż przewoźnika. Potrzebują partnera, który rozumie ich dynamikę.</p>
+          <span class="post__more">Czytaj wpis</span>
+        </a>
+      </article>
+      <article class="post" data-reveal>
+        <a class="post__link" href="https://stitrans.pl/transport-ekspresowy-szybka-logistyka-w-24h-sti-trans/">
+          <div class="post__cover"><svg class="truck truck--night" data-cover="van" viewBox="-250 -40 920 380" aria-hidden="true"></svg></div>
+          <p class="post__tag">Ekspres</p>
+          <h3 class="post__title">Transport ekspresowy: kiedy liczy się każda godzina – jak działa i kto na nim zyskuje?</h3>
+          <p class="post__excerpt">W logistyce czas to pieniądz. Jak działa ekspresowy transport drogowy i kiedy warto z niego skorzystać.</p>
+          <span class="post__more">Czytaj wpis</span>
+        </a>
+      </article>
     </div>
   </section>
 
@@ -308,27 +415,58 @@
 
       <div class="contact__form" data-reveal>
         <form class="form" id="quoteForm" novalidate>
-          <div class="field"><label for="fName">Imię i nazwisko</label><input id="fName" name="name" type="text" autocomplete="name" required><span class="field__err">Podaj imię i nazwisko</span></div>
-          <div class="field"><label for="fPhone">Telefon</label><input id="fPhone" name="phone" type="tel" autocomplete="tel" required><span class="field__err">Podaj numer telefonu</span></div>
-          <div class="field field--wide"><label for="fMail">E-mail <small>(opcjonalnie)</small></label><input id="fMail" name="email" type="email" autocomplete="email"></div>
-          <div class="field"><label for="fFrom">Skąd</label><input id="fFrom" name="from" type="text" placeholder="np. Rybnik"></div>
-          <div class="field"><label for="fTo">Dokąd</label><input id="fTo" name="to" type="text" placeholder="np. Lyon"></div>
-          <fieldset class="field field--wide chips">
-            <legend>Rodzaj transportu</legend>
-            <label><input type="radio" name="cargo" value="FTL"><span>FTL</span></label>
-            <label><input type="radio" name="cargo" value="LTL"><span>LTL</span></label>
-            <label><input type="radio" name="cargo" value="Ekspres"><span>Ekspres</span></label>
-            <label><input type="radio" name="cargo" value="Spedycja"><span>Spedycja</span></label>
-            <label><input type="radio" name="cargo" value="Nie wiem" checked><span>Jeszcze nie wiem</span></label>
+          <ol class="form__steps" aria-hidden="true"><li class="is-on"><span>1</span>Trasa</li><li><span>2</span>Ładunek</li><li><span>3</span>Kontakt</li></ol>
+          <p class="sr-only" id="stepLive" aria-live="polite">Krok 1 z 3: trasa</p>
+
+          <fieldset class="form__page is-on" data-step="0">
+            <legend class="sr-only">Trasa</legend>
+            <div class="field field--grow"><label for="fFrom">Miejsce załadunku</label><input id="fFrom" name="from" type="text" placeholder="np. Rybnik" required><span class="field__err">Podaj miejsce załadunku</span></div>
+            <div class="field field--zip"><label for="fFromZip">Kod pocztowy</label><input id="fFromZip" name="fromZip" type="text" inputmode="text" autocomplete="off" placeholder="44-200"></div>
+            <div class="field field--grow"><label for="fTo">Miejsce rozładunku</label><input id="fTo" name="to" type="text" placeholder="np. Mediolan" required><span class="field__err">Podaj miejsce rozładunku</span></div>
+            <div class="field field--zip"><label for="fToZip">Kod pocztowy</label><input id="fToZip" name="toZip" type="text" autocomplete="off" placeholder="20121"></div>
+            <div class="field field--wide"><label for="fDate">Termin załadunku <small>(opcjonalnie)</small></label><input id="fDate" name="date" type="date"></div>
           </fieldset>
-          <div class="field field--wide"><label for="fMsg">Kilka słów o ładunku <small>(opcjonalnie)</small></label><textarea id="fMsg" name="message" rows="3"></textarea></div>
-          <label class="consent field--wide"><input type="checkbox" name="consent" required><span>Zgadzam się na kontakt w sprawie mojego zapytania.</span></label>
-          <span class="field__err field__err--consent">Potrzebujemy zgody, żeby oddzwonić</span>
-          <button class="btn btn--light has-roll" type="submit"><span class="roll"><span class="roll__in"><span>Wyślij zapytanie</span><span aria-hidden="true">Wyślij zapytanie</span></span></span></button>
+
+          <fieldset class="form__page" data-step="1">
+            <legend class="sr-only">Ładunek</legend>
+            <div class="field field--wide chips" role="radiogroup" aria-labelledby="cargoLbl">
+              <p class="field__label" id="cargoLbl">Rodzaj transportu</p>
+              <label><input type="radio" name="cargo" value="FTL"><span>FTL</span></label>
+              <label><input type="radio" name="cargo" value="LTL"><span>LTL</span></label>
+              <label><input type="radio" name="cargo" value="Ekspres"><span>Ekspres</span></label>
+              <label><input type="radio" name="cargo" value="Spedycja"><span>Spedycja</span></label>
+              <label><input type="radio" name="cargo" value="Nie wiem" checked><span>Jeszcze nie wiem</span></label>
+            </div>
+            <div class="field field--wide"><label for="fGoods">Rodzaj ładunku</label><input id="fGoods" name="goods" type="text" placeholder="np. stal w kręgach, papier, palety"></div>
+            <div class="field field--wide chips" role="radiogroup" aria-labelledby="tempLbl">
+              <p class="field__label" id="tempLbl">Temperatura kontrolowana?</p>
+              <label><input type="radio" name="temp" value="Nie" checked><span>Nie</span></label>
+              <label><input type="radio" name="temp" value="Tak"><span>Tak</span></label>
+            </div>
+            <div class="field field--wide"><label for="fMsg">Kilka słów o ładunku <small>(opcjonalnie)</small></label><textarea id="fMsg" name="message" rows="3" placeholder="Waga, liczba palet, wymagania przy załadunku"></textarea></div>
+          </fieldset>
+
+          <fieldset class="form__page" data-step="2">
+            <legend class="sr-only">Kontakt</legend>
+            <div class="field"><label for="fName">Imię i nazwisko</label><input id="fName" name="name" type="text" autocomplete="name" required><span class="field__err">Podaj imię i nazwisko</span></div>
+            <div class="field"><label for="fCompany">Firma <small>(opcjonalnie)</small></label><input id="fCompany" name="company" type="text" autocomplete="organization"></div>
+            <div class="field"><label for="fPhone">Telefon</label><input id="fPhone" name="phone" type="tel" autocomplete="tel" required><span class="field__err">Podaj numer telefonu</span></div>
+            <div class="field"><label for="fMail">E-mail</label><input id="fMail" name="email" type="email" autocomplete="email" required><span class="field__err">Podaj poprawny adres e-mail</span></div>
+            <div class="field"><label for="fNip">NIP <small>(opcjonalnie)</small></label><input id="fNip" name="nip" type="text" inputmode="numeric"></div>
+            <label class="consent field--wide"><input type="checkbox" name="consent" required><span>Zapoznałem się z <a href="https://stitrans.pl/privacy-policy/">Polityką prywatności</a> i zgadzam się na kontakt w sprawie zapytania.</span></label>
+            <span class="field__err field__err--consent">Potrzebujemy zgody, żeby odpowiedzieć na zapytanie</span>
+          </fieldset>
+
+          <div class="form__nav">
+            <button class="btn btn--ghost" type="button" id="formBack" hidden>Wstecz</button>
+            <button class="btn btn--light has-roll" type="button" id="formNext"><span class="roll"><span class="roll__in"><span>Dalej</span><span aria-hidden="true">Dalej</span></span></span></button>
+            <button class="btn btn--light has-roll" type="submit" id="formSubmit" hidden><span class="roll"><span class="roll__in"><span>Wyślij zapytanie</span><span aria-hidden="true">Wyślij zapytanie</span></span></span></button>
+          </div>
         </form>
         <div class="form-done" id="formDone" hidden tabindex="-1">
           <p class="form-done__title">Dziękujemy.</p>
-          <p>Odezwiemy się najszybciej, jak to możliwe. W pilnej sprawie zadzwoń: <a href="tel:+48698777000">+48 698 777 000</a>.</p>
+          <p id="formDoneText">Odezwiemy się najszybciej, jak to możliwe.</p>
+          <p>W pilnej sprawie zadzwoń: <a href="tel:+48698777000">+48 698 777 000</a>.</p>
           <p class="form-done__note">To wersja demonstracyjna, formularz jeszcze niczego nie wysyła.</p>
         </div>
       </div>
@@ -342,14 +480,26 @@
     <div><h3>Siedziba</h3><p>Marklowicka 47<br>44-300 Wodzisław Śląski</p></div>
     <div><h3>Biuro</h3><p>Przemysłowa 3<br>44-203 Rybnik</p></div>
     <div><h3>Kontakt</h3><p><a href="tel:+48698777000">+48 698 777 000</a><br><a href="mailto:office@stitrans.pl">office@stitrans.pl</a></p></div>
-    <div id="kariera"><h3>Kariera</h3><p>Szukasz pracy w transporcie?<br><a href="mailto:office@stitrans.pl">Napisz do nas</a></p></div>
+    <div><h3>Kariera</h3><p><a href="tel:+48723327526">723 327 526</a><br><a href="mailto:job@stitrans.pl">job@stitrans.pl</a></p></div>
   </div>
   <div class="footer__bottom">
     <span>© 2026 Sachs Trans International sp. z o.o.</span>
-    <a href="#">Polityka prywatności</a>
+    <nav class="footer__links" aria-label="Dokumenty i media społecznościowe">
+      <a href="https://stitrans.pl/privacy-policy/">Polityka prywatności</a>
+      <a href="https://stitrans.pl/polityka-cookies/">Polityka cookies</a>
+      <a href="https://stitrans.pl/wp-content/uploads/2025/05/STI-plan-podzialu-wydzielenie-Dzialu-Am-azon-2025-05-28.pdf">Plan podziału spółki (PDF)</a>
+      <a href="https://www.facebook.com/STItrans/">Facebook</a>
+      <a href="https://www.linkedin.com/company/stitrans">LinkedIn</a>
+    </nav>
     <span>Wersja demonstracyjna. Zdjęcia i teksty są poglądowe.</span>
   </div>
-  <div class="footer__mark" aria-hidden="true"><span></span></div>
+  <!-- Finał: ciężarówka przejeżdża pod monogramem, reflektory oświetlają litery -->
+  <div class="finale" id="finale" aria-hidden="true">
+    <div class="finale__mark"></div>
+    <div class="finale__beam"><div class="finale__mark finale__mark--lit"></div></div>
+    <div class="finale__road"></div>
+    <div class="finale__truck" id="finaleTruck"><svg class="truck truck--night" viewBox="-30 -40 1740 460"></svg></div>
+  </div>
 </footer>
 </body>
 </html>

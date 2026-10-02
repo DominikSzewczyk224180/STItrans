@@ -106,6 +106,8 @@
      2. Rysunki SVG
      ===================================================== */
   const LOGO = 'assets/logo-lockup.png';
+  const LOGO_W = 'assets/logo-lockup-white.png';
+  const easeIn = t => t * t * t;
   const WHEEL_R = 52;
   const WHEEL_Y = 348;
 
@@ -120,7 +122,7 @@
 
   // Ciągnik siodłowy z naczepą 13,6 m, widok z boku. 1 jednostka = 1 cm, ziemia na y = 400.
   function buildTruck(svg, opt) {
-    const o = Object.assign({ tractor: true, pallets: 'none', dims: false, logo: true, ground: false }, opt || {});
+    const o = Object.assign({ tractor: true, trailer: true, pallets: 'none', dims: false, logo: true, ground: false, logoSrc: LOGO }, opt || {});
     const out = { wheels: [], pallets: [], dims: [], ground: null, straps: null, move: null, gps: null };
     const glass = glassGradient(svg);
     if (o.ground) out.ground = svgEl('path', { d: P.line(-3000, 400, 4800, 400), class: 'tk-ground', pathLength: '1' }, svg);
@@ -132,7 +134,7 @@
       p(P.rect(1096, 296, 548, 20, 3), 'tk-fill');             // rama ciągnika
       p(P.rect(1262, 304, 160, 52, 16), 'tk-fill');            // zbiornik paliwa
     }
-    (o.tractor ? [330, 461, 592, 1180, 1545] : [330, 461, 592]).forEach(cx => {
+    [...(o.trailer ? [330, 461, 592] : []), ...(o.tractor ? [1180, 1545] : [])].forEach(cx => {
       const wg = svgEl('g', { class: 'tk-wheel' }, g);
       p(P.circle(cx, WHEEL_Y, WHEEL_R), 'tk-tyre', wg);
       p(P.circle(cx, WHEEL_Y, 31), 'tk-rim', wg);
@@ -145,6 +147,7 @@
     });
     if (o.tractor) p('M1112 336Q1112 286 1180 286Q1248 286 1248 336', 'tk-line');   // błotnik ciągnika
 
+    if (o.trailer) {
     // naczepa
     p(P.rect(264, 290, 396, 8, 2), 'tk-fill');                 // błotnik osi
     p(P.rect(0, 0, 1360, 292, 8), 'tk-fill');                  // skrzynia
@@ -164,9 +167,10 @@
     p(P.line(40, 292, 40, 322), 'tk-line');                    // zderzak tylny
     p(P.rect(14, 322, 58, 14, 2), 'tk-fill');
     p(P.rect(2, 294, 26, 14, 3), 'tk-accent');                 // lampa
-    if (o.logo) svgEl('image', { href: LOGO, x: '530', y: '30', width: '300', height: '70' }, g);
+    if (o.logo) svgEl('image', { href: o.logoSrc, x: '530', y: '30', width: '300', height: '70' }, g);
+    }
 
-    if (o.pallets !== 'none') {
+    if (o.trailer && o.pallets !== 'none') {
       const mixed = o.pallets === 'mixed';
       const H = mixed ? [134, 134, 110, 0, 96, 122, 122, 0, 134, 88, 0] : Array(11).fill(134);
       const C = mixed
@@ -204,7 +208,7 @@
       p(P.circle(1476, -21, 5.5), 'tk-accent', out.gps);
     }
 
-    if (o.dims) {
+    if (o.dims && o.trailer) {
       const dg = svgEl('g', { class: 'tk-dims' }, svg);
       [
         'M0 -12V-70M1360 -12V-70M0 -50H1360M-9 -41L9 -59M1351 -41L1369 -59',      // naczepa
@@ -216,12 +220,13 @@
   }
 
   // Bus do ekspresu, widok z boku; ziemia na y = 310
-  function buildVan(svg) {
-    const out = { wheels: [], move: null };
+  function buildVan(svg, opt) {
+    const o = Object.assign({ logoSrc: LOGO }, opt || {});
+    const out = { wheels: [], move: null, speed: [] };
     const glass = glassGradient(svg);
     svgEl('path', { d: P.line(-420, 310, 900, 310), class: 'tk-line tk-soft' }, svg);
     [[-210, 92, -50], [-230, 160, -70], [-170, 228, -50]].forEach(([x1, y, x2]) =>
-      svgEl('path', { d: P.line(x1, y, x2, y), class: 'tk-speed', pathLength: '1' }, svg));
+      out.speed.push(svgEl('path', { d: P.line(x1, y, x2, y), class: 'tk-speed', pathLength: '1' }, svg)));
     const g = out.move = svgEl('g', { class: 'tk-move' }, svg);
     const p = (d, cls, parent = g) => svgEl('path', { d, class: cls }, parent);
     [118, 488].forEach(cx => {
@@ -240,14 +245,27 @@
     p(P.rect(562, 92, 10, 40, 4), 'tk-fill');
     p(P.rect(596, 196, 10, 18, 3), 'tk-accent');
     p(P.rect(14, 190, 8, 34, 2), 'tk-accent');
-    svgEl('image', { href: LOGO, x: '40', y: '64', width: '190', height: '44' }, g);
+    svgEl('image', { href: o.logoSrc, x: '40', y: '64', width: '190', height: '44' }, g);
     return out;
+  }
+
+  // Krąg stali na podkładzie (okładka wpisu o stali)
+  function buildCoil(svg) {
+    const g = svgEl('g', {}, svg);
+    const p = (d, cls) => svgEl('path', { d, class: cls }, g);
+    p(P.line(-60, 300, 700, 300), 'tk-line tk-soft');
+    p('M188 300L228 236H412L452 300Z', 'tk-fill');
+    p(P.circle(320, 165, 128), 'tk-fill');
+    for (let r = 117; r > 52; r -= 10) p(P.circle(320, 165, r), 'tk-line tk-soft');
+    p(P.circle(320, 165, 46), 'tk-rim');
+    p(P.rect(307, 37, 26, 256, 3), 'tk-line');
+    p(P.circle(320, 165, 128), 'tk-line');
   }
 
   // Mapa Europy: rzutowanie LAEA (10°E, 52°N) jak w js/europe.js, dane Natural Earth (domena publiczna)
   const EU = window.STI_EUROPE || null;
   const HOME = 'POL';
-  const SERVED = new Set(['DEU', 'NLD', 'BEL', 'FRA', 'LUX', 'AUT', 'CHE', 'ITA', 'ESP', 'DNK']);   // jak lista kierunków, do potwierdzenia
+  const SERVED = new Set(['CZE', 'SVK', 'DEU', 'NLD', 'BEL', 'LUX', 'FRA', 'ITA', 'DNK']);   // kierunki ze stitrans.pl/kariera
   const RAD = Math.PI / 180;
   const geo = (lat, lon) => {
     if (!EU) return [(lon + 1) * 0.6494 * 36, (55 - lat) * 36];   // zapas, gdyby nie wczytał się europe.js
@@ -260,7 +278,8 @@
   const CITY = {
     Rybnik: [50.10, 18.55], Berlin: [52.52, 13.40], Monachium: [48.14, 11.58], Hamburg: [53.55, 9.99],
     Mediolan: [45.46, 9.19], Bruksela: [50.85, 4.35], Amsterdam: [52.37, 4.90], Lyon: [45.76, 4.84],
-    'Paryż': [48.86, 2.35], Frankfurt: [50.11, 8.68], Rotterdam: [51.92, 4.48], Zurych: [47.37, 8.54], Kolonia: [50.94, 6.96]
+    'Paryż': [48.86, 2.35], Frankfurt: [50.11, 8.68], Rotterdam: [51.92, 4.48], Zurych: [47.37, 8.54], Kolonia: [50.94, 6.96],
+    Praga: [50.08, 14.43], 'Bratysława': [48.15, 17.11], Kolding: [55.49, 9.47], Antwerpia: [51.22, 4.40]
   };
   function arcPath(a, b, bend) {
     const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
@@ -534,19 +553,54 @@
   toggle.addEventListener('click', () => setPaused(!paused));
   if (RM) setPaused(true);
 
-  // Akty: rodzaje transportu, mapa tras, przykładowy kurs
-  const specRows = $$('#spec li');
+  // Akt 1: FTL, LTL i ekspres po kolei, z rysunkiem pojazdu i ładunku
+  const modesEl = $('#modes');
+  const modeTabs = $$('.modes__tabs span', modesEl);
+  const modeCopies = $$('.mode', modesEl);
+  const modeSvgs = $$('[data-mode-art]', modesEl);
+  const modeArt = {
+    ftl: buildTruck(modeSvgs[0], { pallets: 'full', ground: true, logoSrc: LOGO_W }),
+    ltl: buildTruck(modeSvgs[1], { pallets: 'mixed', ground: true, logoSrc: LOGO_W }),
+    exp: buildVan(modeSvgs[2], { logoSrc: LOGO_W })
+  };
+  modeSvgs.forEach(s => registerStroke(s, 1.25));
+  const MODE_EDGES = [0, 0.36, 0.68, 1];
+  let curMode = -1;
+  const dropPallets = (list, t) => list.forEach((pg, i) => {
+    const k = clamp(t * list.length * 1.3 - i);
+    pg.style.opacity = k.toFixed(3);
+    pg.style.transform = `translate(0px,${((1 - easeOut(k)) * -80).toFixed(1)}px)`;
+  });
+  function renderModes(t) {
+    const idx = t < MODE_EDGES[1] ? 0 : t < MODE_EDGES[2] ? 1 : 2;
+    const lt = RM ? 1 : clamp((t - MODE_EDGES[idx]) / (MODE_EDGES[idx + 1] - MODE_EDGES[idx]));
+    if (idx !== curMode) {
+      curMode = idx;
+      [modeTabs, modeCopies, modeSvgs].forEach(list => list.forEach((el, i) => el.classList.toggle('is-on', i === idx)));
+    }
+    modeTabs.forEach((el, i) => el.style.setProperty('--mp', i < idx ? '1' : i === idx ? lt.toFixed(3) : '0'));
+    if (idx === 0) dropPallets(modeArt.ftl.pallets, lt);
+    if (idx === 1) dropPallets(modeArt.ltl.pallets, lt);
+    if (idx === 2) {
+      const x = lerp(-420, 0, easeOut(clamp(lt * 1.8)));
+      modeArt.exp.move.setAttribute('transform', `translate(${x.toFixed(1)} 0)`);
+      const ang = (x / 42) * DEG;
+      modeArt.exp.wheels.forEach(w => w.g.setAttribute('transform', `rotate(${ang.toFixed(1)} ${w.cx} ${w.cy})`));
+      modeArt.exp.speed.forEach((s, i) => { s.style.strokeDashoffset = (1 - clamp(lt * 2.2 - 0.4 - i * 0.12)).toFixed(3); });
+    }
+  }
   const heroMap = buildMap($('#heroMap'), {
-    routes: ['Berlin', 'Monachium', 'Hamburg', 'Mediolan', 'Bruksela', 'Amsterdam', 'Lyon', 'Paryż'].map(c => ['Rybnik', c]),
-    labels: { Rybnik: 'r', Berlin: 'r', Monachium: 'r', Hamburg: 'r', Mediolan: 'r', Bruksela: 'l', Amsterdam: 'l', Lyon: 'l', 'Paryż': 'l' },
+    routes: ['Praga', 'Bratysława', 'Berlin', 'Monachium', 'Hamburg', 'Kolding', 'Mediolan', 'Rotterdam', 'Antwerpia', 'Paryż'].map(c => ['Rybnik', c]),
+    labels: { Rybnik: 'r', Praga: 'l', 'Bratysława': 'r', Berlin: 'r', Monachium: 'r', Hamburg: 'r', Kolding: 'r', Mediolan: 'r', Rotterdam: 'l', Antwerpia: 'l', 'Paryż': 'l' },
     r: 4.6, movers: true
   });
   const track = $('#track');
   const digits = $$('#trackTime .d');
+  const trackStops = $$('#trackStops li');
   const DEP = 21 * 60 + 30, ARR = 24 * 60 + 5 * 60 + 48;     // 21:30 → 05:48
   let lastMin = -1;
   const actUpdate = [
-    t => specRows.forEach((li, j) => li.style.setProperty('--r', easeOut(clamp((t - 0.04 - j * 0.12) / 0.24)).toFixed(3))),
+    t => renderModes(t),
     t => heroMap.routes.forEach((r, i) => {
       const s = clamp((t - 0.04 - i * 0.06) / 0.28);
       r.path.style.strokeDashoffset = (1 - easeInOut(s)).toFixed(4);
@@ -559,7 +613,9 @@
     t => {
       const k = clamp(t / 0.62), e = easeInOut(k);
       track.style.setProperty('--k', e.toFixed(4));
-      const m = Math.round(lerp(DEP, ARR, e)) % 1440;
+      const mAbs = lerp(DEP, ARR, e);
+      trackStops.forEach(li => li.classList.toggle('is-done', mAbs >= +li.dataset.t - 0.5));
+      const m = Math.round(mAbs) % 1440;
       if (m !== lastMin) {
         lastMin = m;
         const hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
@@ -691,6 +747,21 @@
     });
   }
   let stTop = 0, stH = 1, stFilled = -1;
+  // Liczby ze starej strony liczą się od zera, gdy pojawiają się pod zdaniem
+  const counters = $$('[data-count]');
+  const fmtNum = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F');
+  let countersRun = false;
+  if (!RM) counters.forEach(el => { el.textContent = (el.dataset.prefix || '') + '0'; });
+  function runCounters() {
+    countersRun = true;
+    const t0 = performance.now();
+    const stepC = now => {
+      const k = RM ? 1 : easeOut(clamp((now - t0) / 1900));
+      counters.forEach(el => { el.textContent = (el.dataset.prefix || '') + fmtNum(Math.round(+el.dataset.count * k)); });
+      if (k < 1) requestAnimationFrame(stepC);
+    };
+    requestAnimationFrame(stepC);
+  }
   function renderStatement(y) {
     const start = stTop - vh * 0.35;
     const p = clamp((y - start) / Math.max(1, stH - vh + vh * 0.35));
@@ -699,7 +770,9 @@
       stWords.forEach((w, i) => w.classList.toggle('on', i < n));
       stFilled = n;
     }
-    stFoot.style.setProperty('--foot', (RM ? 1 : easeOut(clamp((p - 0.66) / 0.18))).toFixed(3));
+    const foot = RM ? 1 : easeOut(clamp((p - 0.62) / 0.16));
+    stFoot.style.setProperty('--foot', foot.toFixed(3));
+    if (!countersRun && foot > 0.35) runCounters();
     if (!RM) stStage.style.setProperty('--wm', ((0.5 - p) * 90).toFixed(1) + 'px');
   }
 
@@ -721,6 +794,7 @@
   };
   const dimLabels = [fleetLabel('Naczepa 13,6 m', 680, -50), fleetLabel('Zestaw 16,5 m', 827, 458), fleetLabel('4 m', 1752, 200, 'side')];
   const gpsLabel = fleetLabel('GPS 24/7', 1476, -21, 'gps');
+  const muldaLabel = fleetLabel('Mulda na stal w kręgach', 800, 327);
   const fleetS = { cur: 0, target: 0 };
   let fleetTop = 0, fleetH = 1, fleetStartX = -2600;
 
@@ -742,7 +816,7 @@
     fleet.straps.style.opacity = (1 - clamp(pl * 3) * 0.8).toFixed(3);
     statP.textContent = String(landed * 3);
     statT.textContent = String(Math.round(24 * pl));
-    statV.textContent = String(Math.round(90 * pl));
+    statV.textContent = String(Math.round(100 * pl));
     const dm = RM ? 1 : clamp((p - 0.68) / 0.2);
     fleet.dims.forEach((el, i) => {
       const t = clamp(dm * 1.6 - i * 0.3);
@@ -752,7 +826,35 @@
     const gp = clamp((dm - 0.5) / 0.3);
     fleet.gps.style.opacity = gp.toFixed(3);
     gpsLabel.style.opacity = gp.toFixed(3);
+    muldaLabel.style.opacity = gp.toFixed(3);
   }
+
+  // Dlaczego STItrans: powód najbliżej środka ekranu jest wyraźny, reszta przygaszona
+  const whySec = $('#dlaczego-stitrans');
+  const whyItems = $$('.why__list li');
+  let whyTop = 0, whyH = 1, whyBest = -1;
+  function renderWhy() {
+    const mid = vh * 0.5;
+    let best = 0, bestD = Infinity;
+    whyItems.forEach((li, i) => {
+      const r = li.getBoundingClientRect();
+      const d = Math.abs(r.top + r.height / 2 - mid);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    if (best !== whyBest) { whyItems.forEach((li, i) => li.classList.toggle('is-active', i === best)); whyBest = best; }
+  }
+
+  // Kariera: ciągnik bez naczepy; blog: okładki narysowane w stylu strony
+  const careerCab = $('#careerCab');
+  buildTruck(careerCab, { trailer: false });
+  registerStroke(careerCab, 1.3);
+  $$('[data-cover]').forEach(svg => {
+    const kind = svg.dataset.cover;
+    if (kind === 'ltl') buildTruck(svg, { tractor: false, pallets: 'mixed', ground: true, logoSrc: LOGO_W });
+    if (kind === 'van') buildVan(svg, { logoSrc: LOGO_W });
+    if (kind === 'coil') buildCoil(svg);
+    registerStroke(svg, 1.3);
+  });
 
   // Oferta: karty układają się w stos, poprzednia lekko się cofa
   const servSec = $('#oferta');
@@ -773,10 +875,10 @@
     if (kind === 'van') { buildVan(el); registerStroke(el, 1.2); }
     if (kind === 'net') {
       const netMap = buildMap(el, {
-        routes: [['Rybnik', 'Berlin'], ['Rybnik', 'Monachium'], ['Rybnik', 'Frankfurt'], ['Berlin', 'Hamburg'], ['Hamburg', 'Amsterdam'],
-          ['Amsterdam', 'Rotterdam'], ['Rotterdam', 'Bruksela'], ['Frankfurt', 'Kolonia'], ['Kolonia', 'Bruksela'], ['Bruksela', 'Paryż'],
-          ['Frankfurt', 'Zurych'], ['Monachium', 'Zurych'], ['Paryż', 'Lyon'], ['Lyon', 'Mediolan'], ['Zurych', 'Mediolan']],
-        labels: { Rybnik: 'r', Berlin: 'r', Hamburg: 'r', Amsterdam: 'l', 'Paryż': 'l', Lyon: 'l', Mediolan: 'r', Monachium: 'r', Frankfurt: 'r' },
+        routes: [['Rybnik', 'Praga'], ['Rybnik', 'Berlin'], ['Rybnik', 'Bratysława'], ['Berlin', 'Hamburg'], ['Hamburg', 'Kolding'],
+          ['Hamburg', 'Amsterdam'], ['Amsterdam', 'Rotterdam'], ['Rotterdam', 'Antwerpia'], ['Antwerpia', 'Paryż'], ['Praga', 'Frankfurt'],
+          ['Frankfurt', 'Kolonia'], ['Kolonia', 'Antwerpia'], ['Praga', 'Monachium'], ['Monachium', 'Mediolan'], ['Frankfurt', 'Paryż']],
+        labels: { Rybnik: 'r', Praga: 'r', Berlin: 'r', Hamburg: 'r', Kolding: 'r', Amsterdam: 'l', 'Paryż': 'l', Mediolan: 'r', Monachium: 'r' },
         bend: 0.1, r: 4, movers: true
       });
       new IntersectionObserver(([e]) => setPlaying(netMap, e.isIntersecting)).observe(el);
@@ -793,10 +895,10 @@
   registerStroke(procSvg, 1.1);
   const steps = $$('.step');
   const procS = { cur: 0, target: 0 };
-  let procTop = 0, procH = 1, trackW = 1, stepX = [], truckFront = 0, wheelPx = 10;
+  let procTop = 0, procH = 1, procMax = 1, stepX = [], truckFront = 0, wheelPx = 10;
   function renderProcess(p) {
     if (RM) { steps.forEach(s => s.classList.add('is-active')); return; }
-    const tx = -Math.max(0, trackW - vw) * p;
+    const tx = -procMax * clamp(p / 0.86);      // na końcu ciężarówka stoi przy „Dostawie”
     procTrack.style.transform = `translate3d(${tx.toFixed(1)}px,0,0)`;
     const ang = (-tx / wheelPx) * DEG;
     procTruck.wheels.forEach(w => w.g.setAttribute('transform', `rotate(${ang.toFixed(1)} ${w.cx} ${w.cy})`));
@@ -832,29 +934,97 @@
   }), { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
   $$('[data-split],[data-reveal],.card').forEach(el => revealIO.observe(el));
 
+  const finale = $('#finale');
+  const finBox = $('#finaleTruck');
+  const finSvg = finBox.querySelector('svg');
+  const finTruck = buildTruck(finSvg, { logoSrc: LOGO_W });
+  registerStroke(finSvg, 1.2);
+  const FIN = { drive: 5200, stay: 2600, leave: 4200, gap: 2400 };
+  const FIN_TOTAL = FIN.drive + FIN.stay + FIN.leave + FIN.gap;
+  let finOn = false, finT0 = 0, finRaf = 0, finW = 1, finTW = 1;
+  function placeFinale(x) {
+    finBox.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`;
+    const ang = (x / Math.max(1, WHEEL_R * finTW / 1740)) * DEG;
+    finTruck.wheels.forEach(w => w.g.setAttribute('transform', `rotate(${ang.toFixed(1)} ${w.cx} ${w.cy})`));
+    finale.style.setProperty('--bx', (x + finTW * 1.06).toFixed(1) + 'px');
+  }
+  const finPark = () => finW * 0.5 - finTW * 0.62;
+  function finaleFrame(now) {
+    if (!finOn) return;
+    const t = (now - finT0) % FIN_TOTAL;
+    let x;
+    if (t < FIN.drive) x = lerp(-finTW - 80, finPark(), easeOut(t / FIN.drive));
+    else if (t < FIN.drive + FIN.stay) x = finPark();
+    else if (t < FIN.drive + FIN.stay + FIN.leave) x = lerp(finPark(), finW + 80, easeIn((t - FIN.drive - FIN.stay) / FIN.leave));
+    else x = finW + 80;
+    placeFinale(x);
+    finRaf = requestAnimationFrame(finaleFrame);
+  }
+  new IntersectionObserver(([e]) => {
+    if (RM) return;
+    finOn = e.isIntersecting;
+    cancelAnimationFrame(finRaf);
+    if (finOn) { finT0 = performance.now(); finRaf = requestAnimationFrame(finaleFrame); }
+  }).observe(finale);
+
   /* =====================================================
      5. Formularz, menu, kierunki
      ===================================================== */
   const form = $('#quoteForm');
   const formDone = $('#formDone');
+  const pages = $$('.form__page', form);
+  const stepDots = $$('.form__steps li', form);
+  const btnBack = $('#formBack'), btnNext = $('#formNext'), btnSubmit = $('#formSubmit');
+  const stepLive = $('#stepLive');
+  const STEP_NAMES = ['trasa', 'ładunek', 'kontakt'];
+  let formStep = 0;
   form.addEventListener('input', e => {
     const f = e.target.closest('.field');
     if (f && e.target.value && e.target.value.trim()) { f.classList.remove('is-invalid'); e.target.removeAttribute('aria-invalid'); }
     if (e.target.name === 'consent' && e.target.checked) form.classList.remove('consent-invalid');
   });
-  form.addEventListener('submit', e => {
-    e.preventDefault();
+  function validatePage(page) {
     let firstBad = null;
-    $$('.field input[required]', form).forEach(inp => {
-      const bad = !inp.value.trim();
-      inp.closest('.field').classList.toggle('is-invalid', bad);
+    $$('input[required]', page).forEach(inp => {
+      if (inp.type === 'checkbox') {
+        form.classList.toggle('consent-invalid', !inp.checked);
+        if (!inp.checked) firstBad = firstBad || inp;
+        return;
+      }
+      let bad = !inp.value.trim();
+      if (!bad && inp.type === 'email') bad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inp.value.trim());
+      const f = inp.closest('.field');
+      if (f) f.classList.toggle('is-invalid', bad);
       if (bad) { inp.setAttribute('aria-invalid', 'true'); firstBad = firstBad || inp; }
       else inp.removeAttribute('aria-invalid');
     });
-    const consent = form.elements.consent;
-    form.classList.toggle('consent-invalid', !consent.checked);
-    if (!consent.checked) firstBad = firstBad || consent;
-    if (firstBad) { firstBad.focus(); return; }
+    if (firstBad) firstBad.focus();
+    return !firstBad;
+  }
+  function goStep(n) {
+    formStep = n;
+    pages.forEach((pg, i) => pg.classList.toggle('is-on', i === n));
+    stepDots.forEach((d, i) => { d.classList.toggle('is-on', i === n); d.classList.toggle('is-done', i < n); });
+    btnBack.hidden = n === 0;
+    btnNext.hidden = n === pages.length - 1;
+    btnSubmit.hidden = n !== pages.length - 1;
+    stepLive.textContent = `Krok ${n + 1} z ${pages.length}: ${STEP_NAMES[n]}`;
+    const first = pages[n].querySelector('input:not([type="radio"]), textarea');
+    if (first) first.focus({ preventScroll: true });
+    measure();
+    kick();
+  }
+  btnNext.addEventListener('click', () => { if (validatePage(pages[formStep])) goStep(formStep + 1); });
+  btnBack.addEventListener('click', () => goStep(formStep - 1));
+  form.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && formStep < pages.length - 1) { e.preventDefault(); btnNext.click(); }
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!validatePage(pages[formStep])) return;
+    const d = new FormData(form);
+    const first = String(d.get('name') || '').trim().split(/\s+/)[0];
+    $('#formDoneText').textContent = `${first ? first + ', Twoje' : 'Twoje'} zapytanie ${d.get('from')} → ${d.get('to')} (${d.get('cargo')}) jest już u nas. Odezwiemy się najszybciej, jak to możliwe.`;
     form.hidden = true;
     formDone.hidden = false;
     formDone.focus();
@@ -881,8 +1051,8 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.classList.contains('is-open')) setMenu(false); });
   $$('a[href="#"]').forEach(a => a.addEventListener('click', e => e.preventDefault()));
 
-  // Lista krajów do potwierdzenia z właścicielką
-  const PLACES = ['Polska', 'Niemcy', 'Holandia', 'Belgia', 'Francja', 'Luksemburg', 'Austria', 'Szwajcaria', 'Włochy', 'Hiszpania', 'Dania'];
+  // Kierunki ze stitrans.pl/kariera
+  const PLACES = ['Polska', 'Czechy', 'Słowacja', 'Niemcy', 'Holandia', 'Belgia', 'Luksemburg', 'Francja', 'Włochy', 'Dania'];
   $('#placesText').textContent = 'Kierunki: ' + PLACES.join(', ') + '.';
   const mTrack = $('#marqueeTrack');
   for (let n = 0; n < 2; n++) {
@@ -954,6 +1124,7 @@
     busy = follow(fleetS, clamp((y - fleetTop) / Math.max(1, fleetH - vh)), 7 * DK, dt) || busy;
     if (near(fleetTop, fleetH, y)) renderFleet(fleetS.cur);
 
+    if (near(whyTop, whyH, y)) renderWhy();
     if (near(servTop, servH, y)) renderServices();
 
     busy = follow(procS, clamp((y - procTop) / Math.max(1, procH - vh)), 8 * DK, dt) || busy;
@@ -978,10 +1149,13 @@
     const sc = fb.width / 1860 || 1;
     fleetStartX = -(fb.left / sc) - 1800;
     servTop = pageTop(servSec); servH = servSec.offsetHeight;
+    whyTop = pageTop(whySec); whyH = whySec.offsetHeight;
+    finW = finale.clientWidth; finTW = finBox.offsetWidth;
+    if (RM || !finOn) placeFinale(RM ? finPark() : -finTW - 80);
     procTop = pageTop(procSec); procH = procSec.offsetHeight;
-    trackW = procTrack.scrollWidth;
     stepX = steps.map(s => s.offsetLeft);
     truckFront = procTruckBox.offsetLeft + procTruckBox.offsetWidth * 0.95;
+    procMax = Math.max(1, stepX[stepX.length - 1] - truckFront + 70);
     wheelPx = WHEEL_R * ((procSvg.getBoundingClientRect().width || 300) / 1740);
     const roadTop = procRoad.offsetTop;
     steps.forEach(s => s.style.setProperty('--drop', Math.max(0, roadTop - (s.offsetTop + s.offsetHeight)) + 'px'));
