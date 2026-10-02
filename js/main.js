@@ -76,20 +76,74 @@
     root.style.setProperty('--serif-vs', altFont.vs);
   }
 
-  // Polska typografia: jednoliterowe „w”, „z”, „i”, „o”, „a”, „u” nie zostają na końcu wiersza
-  function fixOrphans(scope) {
-    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
-      acceptNode: n => (n.parentElement && n.parentElement.closest('[lang="en"],script,style,svg,textarea')
-        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
+  // ---------- Języki: polski jest w HTML, angielski i niemiecki w js/i18n.js ----------
+  const I18N = window.STI_I18N || {};
+  const LANGS = ['pl', 'en', 'de'];
+  // teksty, które po polsku powstają w JS albo mają klucz zamiast treści
+  const PL_T = {
+    'step.offer': 'Oferta',
+    'form.step': 'Krok {n} z {total}: {name}',
+    'form.done': '{name}Twoje zapytanie {from} → {to} ({cargo}) jest już u nas. Odezwiemy się najszybciej, jak to możliwe.'
+  };
+  const norm = s => s.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+  // polska typografia: jednoliterowe „w”, „z”, „i”, „o”, „a”, „u” nie zostają na końcu wiersza
+  const orphanize = s => s.replace(/(^|[\s„(])([aiouwzAIOUWZ]) /g, '$1$2\u00A0');
+  const storedLang = (() => { try { return localStorage.getItem('sti-lang'); } catch (e) { return null; } })();
+  const urlLang = new URLSearchParams(location.search).get('lang');
+  let LANG = LANGS.includes(urlLang) ? urlLang : (LANGS.includes(storedLang) ? storedLang : 'pl');
+  const has = key => LANG !== 'pl' && Array.isArray(I18N[key]);
+  const tr = key => (has(key) ? I18N[key][LANG === 'en' ? 0 : 1] : (PL_T[key] || key));
+  const fill = (tpl, vars) => tpl.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : ''));
+  const i18nHooks = [];   // odświeżają teksty tworzone w JS (mapa, etykiety, pasek kierunków, formularz)
+
+  // Zapamiętujemy polskie teksty z HTML (węzły tekstowe i atrybuty), żeby móc wracać do PL
+  const i18nNodes = [];
+  {
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => {
+        const p = n.parentElement;
+        if (!p || p.closest('script,style,svg,[data-split],#statementText,[data-count]')) return NodeFilter.FILTER_REJECT;
+        return /[A-Za-zÀ-ž]/.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
     });
-    const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach(n => {
-      const v = n.nodeValue.replace(/(^|[\s„(])([aiouwzAIOUWZ]) /g, '$1$2\u00A0');
-      if (v !== n.nodeValue) n.nodeValue = v;
-    });
+    while (walker.nextNode()) {
+      const n = walker.currentNode, v = n.nodeValue;
+      const ctx = n.parentElement.closest('[data-i18n]');
+      i18nNodes.push({
+        n, pl: v, key: ctx ? ctx.dataset.i18n : norm(v),
+        lead: v.match(/^\s*/)[0], trail: v.match(/\s*$/)[0],
+        en: !!n.parentElement.closest('[lang="en"]')
+      });
+    }
   }
-  fixOrphans(body);
+  const i18nAttrs = [];
+  $$('[placeholder],[aria-label]').forEach(el => ['placeholder', 'aria-label'].forEach(a => {
+    const v = el.getAttribute(a);
+    if (v && /[A-Za-zÀ-ž]/.test(v)) i18nAttrs.push({ el, a, pl: v });
+  }));
+  const metaDesc = document.querySelector('meta[name="description"]');
+  const PL_TITLE = document.title, PL_DESC = metaDesc ? metaDesc.content : '';
+
+  function applyTexts() {
+    i18nNodes.forEach(o => {
+      if (LANG === 'pl') { o.n.nodeValue = o.en ? o.pl : orphanize(o.pl); return; }
+      o.n.nodeValue = has(o.key) ? o.lead + tr(o.key) + o.trail : o.pl;
+    });
+    i18nAttrs.forEach(o => o.el.setAttribute(o.a, has(norm(o.pl)) ? tr(norm(o.pl)) : o.pl));
+    document.title = has(PL_TITLE) ? tr(PL_TITLE) : PL_TITLE;
+    if (metaDesc) metaDesc.content = has(PL_DESC) ? tr(PL_DESC) : PL_DESC;
+    root.lang = LANG;
+    $$('[data-lang]').forEach(a => a.setAttribute('aria-current', String(a.dataset.lang === LANG)));
+  }
+  applyTexts();
+
+  // Tekst elementu w bieżącym języku (z polskim oryginałem zapamiętanym w data-src)
+  function srcText(el) {
+    if (el.dataset.src == null) el.dataset.src = el.textContent.trim();
+    const src = el.dataset.src;
+    if (has(norm(src))) return tr(norm(src));
+    return LANG === 'pl' && !el.closest('[lang="en"]') ? orphanize(src) : src;
+  }
 
   // Grubość linii rysunków w px, niezależnie od skali SVG
   const strokeTargets = [];
@@ -249,17 +303,83 @@
     return out;
   }
 
-  // Krąg stali na podkładzie (okładka wpisu o stali)
-  function buildCoil(svg) {
+  // Okładki bloga: plan załadunku z góry, kręgi stali w rzucie ukośnym, stoper
+  function buildLoadPlan(svg) {
     const g = svgEl('g', {}, svg);
-    const p = (d, cls) => svgEl('path', { d, class: cls }, g);
-    p(P.line(-60, 300, 700, 300), 'tk-line tk-soft');
-    p('M188 300L228 236H412L452 300Z', 'tk-fill');
-    p(P.circle(320, 165, 128), 'tk-fill');
-    for (let r = 117; r > 52; r -= 10) p(P.circle(320, 165, r), 'tk-line tk-soft');
-    p(P.circle(320, 165, 46), 'tk-rim');
-    p(P.rect(307, 37, 26, 256, 3), 'tk-line');
-    p(P.circle(320, 165, 128), 'tk-line');
+    const X0 = 104, W = 446, H = 84, COLS = 11, ROWS = 3, cw = W / COLS, chh = H / ROWS;
+    const LTL = { A: [], B: [], C: [] };
+    for (let r = 0; r < ROWS; r++) { for (let c = 0; c < 3; c++) LTL.A.push(r * COLS + c); LTL.C.push(r * COLS + 8); }
+    [4, 5, 15, 16].forEach(i => LTL.B.push(i));
+    const colorOf = i => (LTL.A.includes(i) ? '#A9AEF0' : LTL.B.includes(i) ? '#C9CCF0' : LTL.C.includes(i) ? '#E3E4F2' : null);
+    [['FTL', 92, true], ['LTL', 236, false]].forEach(([label, y, full]) => {
+      svgEl('path', { d: P.rect(X0 - 8, y - 8, W + 16, H + 16, 8), class: 'cv-trailer' }, g);
+      svgEl('path', { d: P.rect(X0 + W + 18, y + 6, 50, H - 12, 12), class: 'cv-trailer' }, g);      // ciągnik z góry
+      svgEl('path', { d: P.line(X0 + W + 58, y + 14, X0 + W + 58, y + H - 14), class: 'cv-ring' }, g);
+      const t = svgEl('text', { x: X0 - 34, y: y + H / 2 + 2, 'text-anchor': 'end', class: 'cv-label' }, g); t.textContent = label;
+      let filled = 0;
+      for (let i = 0; i < COLS * ROWS; i++) {
+        const c = i % COLS, r = Math.floor(i / COLS);
+        const col = full ? '#A9AEF0' : colorOf(i);
+        if (col) filled++;
+        svgEl('path', {
+          d: P.rect(+(X0 + c * cw + 3).toFixed(1), +(y + r * chh + 3).toFixed(1), +(cw - 6).toFixed(1), +(chh - 6).toFixed(1), 3),
+          class: 'cv-cell' + (col ? '' : ' cv-cell--empty'), style: `--ci:${i + (full ? 0 : 12)};${col ? `fill:${col}` : ''}`
+        }, g);
+      }
+      const s = svgEl('text', { x: X0 - 34, y: y + H / 2 + 24, 'text-anchor': 'end', class: 'cv-sub' }, g); s.textContent = `${filled}/33`;
+    });
+  }
+  function buildCoils(svg) {
+    const defs = svgEl('defs', {}, svg);
+    const g = svgEl('g', {}, svg);
+    const D = [58, -34], len = Math.hypot(D[0], D[1]), n = [-D[1] / len, D[0] / len];
+    const FLOOR = 322, R = 80;
+    svgEl('path', { d: `M0 ${FLOOR}H640`, class: 'cv-floor' }, g);
+    [150, 322, 494].forEach(cx => {
+      const cy = FLOOR - R, id = uid('coil');
+      const P1 = [cx + n[0] * R, cy + n[1] * R], P2 = [cx - n[0] * R, cy - n[1] * R];
+      const lg = svgEl('linearGradient', { id: id + 'b', gradientUnits: 'userSpaceOnUse', x1: P2[0], y1: P2[1], x2: P1[0], y2: P1[1] }, defs);
+      [['0', '#6F75CF'], ['.28', '#DADCF8'], ['.55', '#555BB4'], ['1', '#191B4A']].forEach(([o, c]) => svgEl('stop', { offset: o, 'stop-color': c }, lg));
+      const rg = svgEl('radialGradient', { id: id + 'f', cx: '42%', cy: '38%', r: '70%' }, defs);
+      [['0', '#6B71CC'], ['.6', '#3B4096'], ['1', '#23276A']].forEach(([o, c]) => svgEl('stop', { offset: o, 'stop-color': c }, rg));
+      const cp = svgEl('clipPath', { id: id + 'c' }, defs);
+      svgEl('circle', { cx, cy, r: 27 }, cp);
+      svgEl('ellipse', { cx: cx + D[0] / 2, cy: FLOOR + 2, rx: R * 1.2, ry: 10, class: 'cv-shadow' }, g);
+      svgEl('circle', { cx: cx + D[0], cy: cy + D[1], r: R, fill: `url(#${id}b)`, class: 'cv-edge' }, g);
+      svgEl('path', { d: `M${P1[0].toFixed(1)} ${P1[1].toFixed(1)}l${D[0]} ${D[1]}L${(P2[0] + D[0]).toFixed(1)} ${(P2[1] + D[1]).toFixed(1)}L${P2[0].toFixed(1)} ${P2[1].toFixed(1)}Z`, fill: `url(#${id}b)` }, g);
+      svgEl('path', { d: `M${P1[0].toFixed(1)} ${P1[1].toFixed(1)}l${D[0]} ${D[1]}M${P2[0].toFixed(1)} ${P2[1].toFixed(1)}l${D[0]} ${D[1]}`, class: 'cv-edge' }, g);
+      svgEl('circle', { cx, cy, r: R, fill: `url(#${id}f)`, class: 'cv-edge' }, g);
+      for (let r = R - 8; r > 32; r -= 6.5) svgEl('circle', { cx, cy, r: r.toFixed(1), class: 'cv-coilring' }, g);
+      svgEl('circle', { cx, cy, r: 27, class: 'cv-eye' }, g);                                      // oko kręgu
+      svgEl('circle', { cx: cx + D[0] * 0.42, cy: cy + D[1] * 0.42, r: 27, class: 'cv-eye-far', 'clip-path': `url(#${id}c)` }, g);
+      svgEl('circle', { cx, cy, r: 27, class: 'cv-edge cv-nofill' }, g);
+      [-20, 160].forEach(a => {                                                                     // opaski
+        const t = a * Math.PI / 180;
+        svgEl('path', { d: P.line(+(cx + Math.cos(t) * 27).toFixed(1), +(cy + Math.sin(t) * 27).toFixed(1), +(cx + Math.cos(t) * R).toFixed(1), +(cy + Math.sin(t) * R).toFixed(1)), class: 'cv-strap' }, g);
+      });
+      svgEl('path', { d: `M${cx - R * 0.78} ${FLOOR}L${cx - R * 0.5} ${FLOOR - 26}H${cx - R * 0.22}L${cx - R * 0.12} ${FLOOR}Z`, class: 'cv-wedge' }, g);   // kliny
+      svgEl('path', { d: `M${cx + R * 0.12} ${FLOOR}L${cx + R * 0.22} ${FLOOR - 26}H${cx + R * 0.5}L${cx + R * 0.78} ${FLOOR}Z`, class: 'cv-wedge' }, g);
+    });
+  }
+  function buildStopwatch(svg) {
+    const g = svgEl('g', {}, svg);
+    const cx = 320, cy = 218, R = 132;
+    svgEl('path', { d: P.rect(cx - 16, cy - R - 32, 32, 14, 4), class: 'cv-fill' }, g);
+    svgEl('path', { d: P.rect(cx - 7, cy - R - 18, 14, 18, 2), class: 'cv-fill' }, g);
+    svgEl('path', { d: P.rect(-10, -8, 20, 16, 4), class: 'cv-fill', transform: `translate(${(cx + Math.cos(-Math.PI / 4) * (R + 12)).toFixed(1)} ${(cy + Math.sin(-Math.PI / 4) * (R + 12)).toFixed(1)}) rotate(45)` }, g);
+    svgEl('circle', { cx, cy, r: R, class: 'cv-dial' }, g);
+    svgEl('circle', { cx, cy, r: R - 12, class: 'cv-ring' }, g);
+    for (let i = 0; i < 60; i++) {
+      const a = i / 60 * Math.PI * 2 - Math.PI / 2, long = i % 5 === 0, r1 = R - 22, r2 = r1 - (long ? 16 : 7);
+      svgEl('path', { d: P.line(+(cx + Math.cos(a) * r1).toFixed(1), +(cy + Math.sin(a) * r1).toFixed(1), +(cx + Math.cos(a) * r2).toFixed(1), +(cy + Math.sin(a) * r2).toFixed(1)), class: long ? 'cv-tick cv-tick--long' : 'cv-tick' }, g);
+    }
+    const ar = R - 52, end = 250 * Math.PI / 180;     // łuk czasu: od godziny 12 zgodnie ze wskazówkami
+    const ex = cx + Math.sin(end) * ar, ey = cy - Math.cos(end) * ar;
+    svgEl('path', { d: `M${cx} ${cy - ar}A${ar} ${ar} 0 1 1 ${ex.toFixed(1)} ${ey.toFixed(1)}`, class: 'cv-arc', pathLength: '1' }, g);
+    const t = svgEl('text', { x: cx, y: cy - 22, 'text-anchor': 'middle', class: 'cv-text' }, g); t.textContent = '24 h';
+    const hand = svgEl('g', { class: 'cv-hand' }, g);
+    svgEl('path', { d: P.line(cx, cy + 18, cx, cy - R + 40), class: 'cv-handline' }, hand);
+    svgEl('circle', { cx, cy, r: 7, class: 'cv-hub' }, g);
   }
 
   // Mapa Europy: rzutowanie LAEA (10°E, 52°N) jak w js/europe.js, dane Natural Earth (domena publiczna)
@@ -334,7 +454,7 @@
       const [x, y] = geo(...CITY[name]);
       const l = document.createElement('span');
       l.className = 'map__label' + (side === 'l' ? ' map__label--left' : '') + (name === o.origin ? ' map__label--origin' : '');
-      l.textContent = name;
+      l.textContent = tr(name);
       l.style.left = (x / 520 * 100).toFixed(2) + '%';
       l.style.top = (y / 400 * 100).toFixed(2) + '%';
       l.style.setProperty('--ri', String(firstIdx.has(name) ? firstIdx.get(name) : 0));
@@ -342,6 +462,8 @@
       out.labels.set(name, l);
     });
     if (svg.pauseAnimations) svg.pauseAnimations();   // ruch włączamy dopiero, gdy mapa jest widoczna
+    registerStroke(svg, o.sw || 2);
+    i18nHooks.push(() => out.labels.forEach((l, name) => { l.textContent = tr(name); }));
     return out;
   }
   const setPlaying = (m, on) => {
@@ -546,11 +668,12 @@
   function setPaused(v) {
     paused = v;
     toggle.setAttribute('aria-pressed', String(paused));
-    toggleLabel.textContent = paused ? 'Wznów ruch' : 'Zatrzymaj ruch';
+    toggleLabel.textContent = tr(paused ? 'Wznów ruch' : 'Zatrzymaj ruch');
     if (videoReady) { if (paused) video.pause(); else video.play().catch(() => {}); }
     else if (paused) stopRoad(); else startRoad();
   }
   toggle.addEventListener('click', () => setPaused(!paused));
+  i18nHooks.push(() => { toggleLabel.textContent = tr(paused ? 'Wznów ruch' : 'Zatrzymaj ruch'); });
   if (RM) setPaused(true);
 
   // Akt 1: FTL, LTL i ekspres po kolei, z rysunkiem pojazdu i ładunku
@@ -592,7 +715,7 @@
   const heroMap = buildMap($('#heroMap'), {
     routes: ['Praga', 'Bratysława', 'Berlin', 'Monachium', 'Hamburg', 'Kolding', 'Mediolan', 'Rotterdam', 'Antwerpia', 'Paryż'].map(c => ['Rybnik', c]),
     labels: { Rybnik: 'r', Praga: 'l', 'Bratysława': 'r', Berlin: 'r', Monachium: 'r', Hamburg: 'r', Kolding: 'r', Mediolan: 'r', Rotterdam: 'l', Antwerpia: 'l', 'Paryż': 'l' },
-    r: 4.6, movers: true
+    r: 3.4, sw: 2.4, movers: true
   });
   const track = $('#track');
   const digits = $$('#trackTime .d');
@@ -734,9 +857,11 @@
   const stFoot = $('#statementFoot');
   const stStage = $('.statement__stage');
   const stWords = [];
-  {
-    const words = stText.textContent.trim().split(/[ \t\n\r]+/);
+  let stTop = 0, stH = 1, stFilled = -1;
+  function buildStatement() {
+    const words = srcText(stText).split(/[ \t\n\r]+/);
     stText.textContent = '';
+    stWords.length = 0;
     words.forEach((w, i) => {
       const s = document.createElement('span');
       s.className = 'sw';
@@ -745,8 +870,10 @@
       stWords.push(s);
       if (i < words.length - 1) stText.appendChild(document.createTextNode(' '));
     });
+    stFilled = -1;
   }
-  let stTop = 0, stH = 1, stFilled = -1;
+  buildStatement();
+  i18nHooks.push(buildStatement);
   // Liczby ze starej strony liczą się od zera, gdy pojawiają się pod zdaniem
   const counters = $$('[data-count]');
   const fmtNum = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F');
@@ -786,7 +913,8 @@
   const fleetLabel = (txt, x, y, mod) => {
     const l = document.createElement('span');
     l.className = 'tk-label' + (mod ? ` tk-label--${mod}` : '');
-    l.textContent = txt;
+    l.textContent = tr(txt);
+    i18nHooks.push(() => { l.textContent = tr(txt); });
     l.style.left = ((x + 40) / 1860 * 100).toFixed(2) + '%';
     l.style.top = ((y + 110) / 610 * 100).toFixed(2) + '%';
     fleetBox.appendChild(l);
@@ -850,10 +978,10 @@
   registerStroke(careerCab, 1.3);
   $$('[data-cover]').forEach(svg => {
     const kind = svg.dataset.cover;
-    if (kind === 'ltl') buildTruck(svg, { tractor: false, pallets: 'mixed', ground: true, logoSrc: LOGO_W });
-    if (kind === 'van') buildVan(svg, { logoSrc: LOGO_W });
-    if (kind === 'coil') buildCoil(svg);
-    registerStroke(svg, 1.3);
+    if (kind === 'plan') buildLoadPlan(svg);
+    if (kind === 'coils') buildCoils(svg);
+    if (kind === 'watch') buildStopwatch(svg);
+    registerStroke(svg, 1.2);
   });
 
   // Oferta: karty układają się w stos, poprzednia lekko się cofa
@@ -879,7 +1007,7 @@
           ['Hamburg', 'Amsterdam'], ['Amsterdam', 'Rotterdam'], ['Rotterdam', 'Antwerpia'], ['Antwerpia', 'Paryż'], ['Praga', 'Frankfurt'],
           ['Frankfurt', 'Kolonia'], ['Kolonia', 'Antwerpia'], ['Praga', 'Monachium'], ['Monachium', 'Mediolan'], ['Frankfurt', 'Paryż']],
         labels: { Rybnik: 'r', Praga: 'r', Berlin: 'r', Hamburg: 'r', Kolding: 'r', Amsterdam: 'l', 'Paryż': 'l', Mediolan: 'r', Monachium: 'r' },
-        bend: 0.1, r: 4, movers: true
+        bend: 0.1, r: 4, sw: 1.6, movers: true
       });
       new IntersectionObserver(([e]) => setPlaying(netMap, e.isIntersecting)).observe(el);
     }
@@ -912,8 +1040,9 @@
   }
 
   // Wejścia nagłówków i akapitów
-  $$('[data-split]').forEach(el => {
-    const words = el.textContent.trim().split(/[ \t\n\r]+/);   // twarda spacja (&nbsp;) trzyma słowa razem
+  const splitEls = $$('[data-split]');
+  function splitWords(el) {
+    const words = srcText(el).split(/[ \t\n\r]+/);   // twarda spacja (&nbsp;) trzyma słowa razem
     el.textContent = '';
     words.forEach((w, i) => {
       const o = document.createElement('span');
@@ -926,7 +1055,9 @@
       el.appendChild(o);
       if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
     });
-  });
+  }
+  splitEls.forEach(splitWords);
+  i18nHooks.push(() => splitEls.forEach(splitWords));
   const revealIO = new IntersectionObserver(entries => entries.forEach(e => {
     if (!e.isIntersecting) return;
     e.target.classList.add('is-in');
@@ -1008,7 +1139,7 @@
     btnBack.hidden = n === 0;
     btnNext.hidden = n === pages.length - 1;
     btnSubmit.hidden = n !== pages.length - 1;
-    stepLive.textContent = `Krok ${n + 1} z ${pages.length}: ${STEP_NAMES[n]}`;
+    stepLive.textContent = fill(tr('form.step'), { n: n + 1, total: pages.length, name: tr(STEP_NAMES[n]) });
     const first = pages[n].querySelector('input:not([type="radio"]), textarea');
     if (first) first.focus({ preventScroll: true });
     measure();
@@ -1024,7 +1155,9 @@
     if (!validatePage(pages[formStep])) return;
     const d = new FormData(form);
     const first = String(d.get('name') || '').trim().split(/\s+/)[0];
-    $('#formDoneText').textContent = `${first ? first + ', Twoje' : 'Twoje'} zapytanie ${d.get('from')} → ${d.get('to')} (${d.get('cargo')}) jest już u nas. Odezwiemy się najszybciej, jak to możliwe.`;
+    let msg = fill(tr('form.done'), { name: first ? first + ', ' : '', from: d.get('from'), to: d.get('to'), cargo: tr(String(d.get('cargo'))) });
+    if (!first) msg = msg.charAt(0).toUpperCase() + msg.slice(1);
+    $('#formDoneText').textContent = msg;
     form.hidden = true;
     formDone.hidden = false;
     formDone.focus();
@@ -1053,18 +1186,45 @@
 
   // Kierunki ze stitrans.pl/kariera
   const PLACES = ['Polska', 'Czechy', 'Słowacja', 'Niemcy', 'Holandia', 'Belgia', 'Luksemburg', 'Francja', 'Włochy', 'Dania'];
-  $('#placesText').textContent = 'Kierunki: ' + PLACES.join(', ') + '.';
   const mTrack = $('#marqueeTrack');
-  for (let n = 0; n < 2; n++) {
-    const g = document.createElement('div');
-    g.className = 'marquee__group';
-    PLACES.forEach(name => {
-      const s = document.createElement('span'); s.className = 'marquee__item'; s.textContent = name;
-      const d = document.createElement('i'); d.className = 'marquee__sep';
-      g.append(s, d);
-    });
-    mTrack.appendChild(g);
+  function buildMarquee() {
+    $('#placesText').textContent = tr('Kierunki:') + ' ' + PLACES.map(tr).join(', ') + '.';
+    mTrack.textContent = '';
+    for (let n = 0; n < 2; n++) {
+      const g = document.createElement('div');
+      g.className = 'marquee__group';
+      PLACES.forEach(name => {
+        const s = document.createElement('span'); s.className = 'marquee__item'; s.textContent = tr(name);
+        const d = document.createElement('i'); d.className = 'marquee__sep';
+        g.append(s, d);
+      });
+      mTrack.appendChild(g);
+    }
   }
+  buildMarquee();
+  i18nHooks.push(buildMarquee);
+
+  // Przełącznik PL / EN / DE: bez przeładowania strony, wybór zapisany w adresie i w przeglądarce
+  function setLang(lang) {
+    if (!LANGS.includes(lang) || lang === LANG) return;
+    LANG = lang;
+    applyTexts();
+    i18nHooks.forEach(fn => fn());
+    try { localStorage.setItem('sti-lang', lang); } catch (e) { /* tryb prywatny */ }
+    try {
+      const u = new URL(location.href);
+      if (lang === 'pl') u.searchParams.delete('lang'); else u.searchParams.set('lang', lang);
+      history.replaceState(null, '', u);
+    } catch (e) { /* file:// w starszych przeglądarkach */ }
+    measure();
+    kick();
+  }
+  $$('[data-lang]').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    setLang(a.dataset.lang);
+    if (menu.classList.contains('is-open')) setMenu(false);
+  }));
+  i18nHooks.push(() => { if (stepLive) stepLive.textContent = fill(tr('form.step'), { n: formStep + 1, total: pages.length, name: tr(STEP_NAMES[formStep]) }); });
 
   /* =====================================================
      6. Pętla animacji, pomiary, preloader, start
