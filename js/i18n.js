@@ -30,6 +30,12 @@ window.STI_I18N = {
   /* ---------- hero ---------- */
   'STItrans, transport i spedycja.': ['STItrans, transport and forwarding.', 'STItrans, Transport und Spedition.'],
   'Przewiń': ['Scroll', 'Scrollen'],
+  'Przewiń w dół': ['Scroll down', 'Nach unten scrollen'],
+  'Przewiń dalej': ['Keep scrolling', 'Weiter scrollen'],
+  'Sekcje strony': ['Page sections', 'Seitenabschnitte'],
+  'Start': ['Start', 'Start'],
+  'Flota': ['Fleet', 'Flotte'],
+  'Jak działamy': ['How we work', 'So arbeiten wir'],
   'Transport drogowy i spedycja międzynarodowa. Pełne ładunki, drobnica i przesyłki ekspresowe w Polsce i Europie Zachodniej, monitorowane przez całą dobę.': ['Road transport and international freight forwarding. Full loads, part loads and express shipments across Poland and Western Europe, tracked around the clock.', 'Straßentransport und internationale Spedition. Komplett- und Teilladungen sowie Expresssendungen in Polen und Westeuropa, rund um die Uhr überwacht.'],
   'Pełne ładunki, drobnica i przesyłki ekspresowe. Do każdego zlecenia dobieramy pojazd i trasę.': ['Full loads, part loads and express shipments. We match the vehicle and the route to every order.', 'Komplett- und Teilladungen sowie Expresssendungen. Für jeden Auftrag wählen wir das passende Fahrzeug und die Route.'],
   'Ekspres': ['Express', 'Express'],

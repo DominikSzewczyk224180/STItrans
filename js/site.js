@@ -28,6 +28,7 @@
     const overDark = darkZones.some(el => { const r = el.getBoundingClientRect(); return r.top <= hh / 2 && r.bottom >= hh / 2; });
     header.classList.toggle('is-dark', overDark);
     header.classList.toggle('is-solid', y > 8);
+    header.classList.toggle('is-scrolled', y > 40);
     // chowa się przy przewijaniu w dół, wraca przy przewijaniu w górę
     let hide = hidden;
     if (y < 80 || (menu && menu.classList.contains('is-open'))) hide = false;

@@ -323,8 +323,8 @@
     const availW = copy.clientWidth - 2 * padPx;
     const sh = stage.clientHeight;
     const block = getComputedStyle(slotBlock).display !== 'none';
-    const hCap = block ? sh * 0.38 / 2.85 : (sh - 250) / 2.9;
-    const fs = Math.max(34, Math.min(availW / Math.max(1, widest) * 98, hCap, 240));
+    const hCap = block ? sh * 0.38 / 2.85 : (sh - 250) / 3.2;
+    const fs = Math.max(34, Math.min(availW / Math.max(1, widest) * 86, hCap, 212));
     heroTitle.style.fontSize = fs.toFixed(1) + 'px';
   }
   function measureSlot() {
@@ -399,6 +399,7 @@
     const overNight = body.classList.contains('theme-dark') && contactTop - y <= headerH;
     header.classList.toggle('is-dark', overMedia || overNight);
     header.classList.toggle('is-solid', !inHero);
+    header.classList.toggle('is-scrolled', y > 40);   // logo płynnie się zmniejsza
   }
 
   /* =====================================================
@@ -457,10 +458,14 @@
   }
 
   // Flota: zestaw wjeżdża, palety się ładują, rysują się wymiary
-  const fleetSec = $('#dlaczego-my');
+  const fleetSec = $('#flota');
   const fleetBox = $('#fleetDrawing');
   const fleetSvg = $('#fleetTruck');
+  // zarys zestawu tam, gdzie zaparkuje: sekcja nie jest pusta, zanim ciężarówka wjedzie
+  const fleetGhost = buildTruck(fleetSvg, { logo: false });
+  fleetGhost.move.classList.add('tk-ghost');
   const fleet = buildTruck(fleetSvg, { pallets: 'full', dims: true, ground: true });
+  const fleetStats = $('.fleet__stats');
   registerStroke(fleetSvg, 1.3);
   const statP = $('#statPallets'), statT = $('#statTons'), statV = $('#statVol');
   const fleetLabel = (txt, x, y, mod) => {
@@ -484,6 +489,7 @@
     const d = clamp((p - 0.04) / 0.34);
     const x = RM ? 0 : lerp(fleetStartX, 0, easeOut(d));
     fleet.move.setAttribute('transform', `translate(${x.toFixed(1)} 0)`);
+    fleetGhost.move.style.opacity = RM ? '0' : (1 - easeOut(clamp((d - 0.7) / 0.3))).toFixed(3);
     const ang = (x / WHEEL_R) * DEG;
     fleet.wheels.forEach(w => w.g.setAttribute('transform', `rotate(${ang.toFixed(1)} ${w.cx} ${w.cy})`));
     const pl = RM ? 1 : clamp((p - 0.42) / 0.26);
@@ -495,6 +501,7 @@
       pg.style.transform = `translate(0px,${((1 - easeOut(t)) * -90).toFixed(1)}px)`;
     });
     fleet.straps.style.opacity = (1 - clamp(pl * 3) * 0.8).toFixed(3);
+    fleetStats.style.opacity = (RM ? 1 : clamp(pl * 5)).toFixed(3);
     statP.textContent = String(landed * 3);
     statT.textContent = String(Math.round(24 * pl));
     statV.textContent = String(Math.round(100 * pl));
@@ -511,7 +518,7 @@
   }
 
   // Dlaczego STItrans: powód najbliżej środka ekranu jest wyraźny, reszta przygaszona
-  const whySec = $('#dlaczego-stitrans');
+  const whySec = $('#dlaczego-my');
   const whyItems = $$('.why__list li');
   let whyTop = 0, whyH = 1, whyBest = -1;
   function renderWhy() {
@@ -738,11 +745,77 @@
   // Lenis wygładza przewijanie kółkiem i gładzikiem; na dotyku zostaje natywne przewijanie
   let lenis = null;
   if (!RM && typeof window.Lenis === 'function') {
-    lenis = new window.Lenis({ autoRaf: true, lerp: 0.085, wheelMultiplier: 0.9, anchors: true });
+    lenis = new window.Lenis({ autoRaf: true, lerp: 0.085, wheelMultiplier: 0.9 });
     lenis.stop();
     S.lenis = lenis;   // menu z core.js zatrzymuje przewijanie, gdy jest otwarte
   }
   const DK = lenis ? 2.4 : 1;   // gdy działa Lenis, własne wygładzanie animacji jest lżejsze
+
+  // Kotwice (#oferta, #o-nas…). Sekcje animowane przewijaniem mają data-land: ułamek sceny,
+  // w którym lądujemy, żeby po kliknięciu od razu było widać treść, a nie jej pusty początek
+  function anchorY(el) {
+    const land = parseFloat(el.dataset.land || '0');
+    return Math.max(0, pageTop(el) + Math.max(0, el.offsetHeight - vh) * land);
+  }
+  function goTo(el, immediate) {
+    const y = anchorY(el);
+    if (lenis) lenis.scrollTo(y, { immediate: !!immediate, force: true });
+    else window.scrollTo({ top: y, behavior: immediate || RM ? 'auto' : 'smooth' });
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a || a.getAttribute('href').length < 2) return;
+    const el = document.getElementById(a.getAttribute('href').slice(1));
+    if (!el) return;
+    e.preventDefault();
+    if (menu.classList.contains('is-open')) S.setMenu(false);
+    goTo(el);
+  });
+
+  // Szyna postępu: kropka na sekcję, wypełnienie rośnie odcinkami między sekcjami
+  const rail = $('#rail'), railFill = $('#railFill');
+  const railItems = $$('#rail [data-sec]').map(a => ({ a, el: document.getElementById(a.dataset.sec) }));
+  let railTops = [], railEnd = 1, railActive = -1, railLabelT = 0;
+  function measureRail() {
+    railTops = railItems.map(r => pageTop(r.el));
+    railEnd = Math.max(1, document.documentElement.scrollHeight - vh);
+  }
+  function renderRail(y) {
+    const line = y + vh * 0.35;
+    let i = 0;
+    while (i < railTops.length - 1 && line >= railTops[i + 1]) i++;
+    const next = i < railTops.length - 1 ? railTops[i + 1] : railEnd + vh * 0.35;
+    const f = (i + clamp((line - railTops[i]) / Math.max(1, next - railTops[i]))) / (railTops.length - 1);
+    railFill.style.transform = `scaleY(${clamp(f).toFixed(4)})`;
+    const dark = header.classList.contains('is-dark');
+    rail.classList.toggle('is-dark', dark);
+    cue.classList.toggle('is-dark', dark);
+    if (i !== railActive) {
+      railItems.forEach((r, j) => r.a.classList.toggle('is-active', j === i));
+      if (railActive !== -1) {             // po zmianie sekcji nazwa pokazuje się na chwilę
+        rail.classList.add('is-show-label');
+        clearTimeout(railLabelT);
+        railLabelT = setTimeout(() => rail.classList.remove('is-show-label'), 2000);
+      }
+      railActive = i;
+    }
+  }
+
+  // Podpowiedź „Przewiń dalej”: tylko gdy ktoś zatrzyma się w scenie animowanej przewijaniem
+  const cue = $('#cue');
+  let cueT = 0;
+  function inScene(y) {
+    return [[heroTop, heroH], [stTop, stH], [fleetTop, fleetH], [procTop, procH]]
+      .some(([t, h]) => y > t + 4 && y < t + (h - vh) * 0.9);
+  }
+  function armCue() {
+    cue.classList.remove('is-on');
+    clearTimeout(cueT);
+    cueT = setTimeout(() => {
+      if (finished && !menu.classList.contains('is-open') && inScene(window.scrollY)) cue.classList.add('is-on');
+    }, 2200);
+  }
+  window.addEventListener('scroll', armCue, { passive: true });
 
   // Nagłówek chowa się przy przewijaniu w dół i wraca przy przewijaniu w górę (poza hero)
   let lastY = window.scrollY, headerHidden = false;
@@ -785,6 +858,7 @@
     if (near(heroTop, heroH, y)) renderHero(heroS.cur);
     headerState(y, heroS.cur);
     headerAutoHide(y);
+    renderRail(y);
 
     if (near(stTop, stH, y)) renderStatement(y);
 
@@ -827,6 +901,7 @@
     const roadTop = procRoad.offsetTop;
     steps.forEach(s => s.style.setProperty('--drop', Math.max(0, roadTop - (s.offsetTop + s.offsetHeight)) + 'px'));
     contactTop = pageTop(contactSec);
+    measureRail();
     updateStrokes();
   }
 
@@ -871,7 +946,8 @@
     if (RM) introT = 1;
     else { introStart = performance.now() + 620; introRunning = true; }
     const target = location.hash && document.getElementById(location.hash.slice(1));
-    if (target) { if (lenis) lenis.scrollTo(target, { immediate: true }); else window.scrollTo(0, pageTop(target)); }
+    if (target) goTo(target, true);
+    armCue();
     kick();
     startRoad();
     setTimeout(() => { loader.remove(); measure(); kick(); }, 1300);

@@ -74,6 +74,23 @@
   <a class="btn" href="#wycena">Poproś o wycenę</a>
 </div>
 
+<!-- Postęp strony: cienka szyna z sekcjami (kliknięcie przenosi do sekcji) -->
+<nav class="rail" id="rail" aria-label="Sekcje strony">
+  <span class="rail__track" aria-hidden="true"><i class="rail__fill" id="railFill"></i></span>
+  <ol class="rail__list">
+    <li><a href="#top" data-sec="top"><span class="rail__label">Start</span><span class="rail__dot"></span></a></li>
+    <li><a href="#o-nas" data-sec="o-nas"><span class="rail__label">O nas</span><span class="rail__dot"></span></a></li>
+    <li><a href="#flota" data-sec="flota"><span class="rail__label">Flota</span><span class="rail__dot"></span></a></li>
+    <li><a href="#dlaczego-my" data-sec="dlaczego-my"><span class="rail__label">Dlaczego my</span><span class="rail__dot"></span></a></li>
+    <li><a href="#oferta" data-sec="oferta"><span class="rail__label">Oferta</span><span class="rail__dot"></span></a></li>
+    <li><a href="#jak-dzialamy" data-sec="jak-dzialamy"><span class="rail__label">Jak działamy</span><span class="rail__dot"></span></a></li>
+    <li><a href="#kariera" data-sec="kariera"><span class="rail__label">Kariera</span><span class="rail__dot"></span></a></li>
+    <li><a href="#blog" data-sec="blog"><span class="rail__label">Wiedza z trasy</span><span class="rail__dot"></span></a></li>
+    <li><a href="#wycena" data-sec="wycena"><span class="rail__label">Wycena</span><span class="rail__dot"></span></a></li>
+  </ol>
+</nav>
+<div class="cue" id="cue" aria-hidden="true"><span class="cue__icon"><i></i></span><span class="cue__text">Przewiń dalej</span></div>
+
 <main id="top">
 
   <!-- ============ 1. Hero: slogan w trzech aktach ============ -->
@@ -89,7 +106,7 @@
         </h1>
         <div class="slot slot--block" id="slotBlock" aria-hidden="true"></div>
         <div class="hero__foot">
-          <div class="hero__hint fade-up" aria-hidden="true"><i></i>Przewiń</div>
+          <div class="hero__hint fade-up" aria-hidden="true"><span class="hint__mouse"><i></i></span><span class="hint__chev"><i></i></span><span>Przewiń w dół</span></div>
           <p class="hero__lead fade-up">Transport drogowy i spedycja międzynarodowa. Pełne ładunki, drobnica i przesyłki ekspresowe w Polsce i Europie Zachodniej, monitorowane przez całą dobę.</p>
           <a class="btn hero__cta fade-up has-roll" href="#wycena"><span class="roll"><span class="roll__in"><span>Poproś o wycenę</span><span aria-hidden="true">Poproś o wycenę</span></span></span></a>
         </div>
@@ -190,7 +207,7 @@
   </section>
 
   <!-- ============ 2. O nas: zdanie wypełniane przewijaniem ============ -->
-  <section class="statement" id="o-nas" aria-labelledby="statementText">
+  <section class="statement" id="o-nas" data-land="0.5" aria-labelledby="statementText">
     <div class="statement__stage">
       <h2 class="statement__text" id="statementText">Doświadczenie z największych firm logistycznych. Elastyczność niezależnego przewoźnika.</h2>
       <div class="statement__foot" id="statementFoot">
@@ -205,7 +222,7 @@
   </section>
 
   <!-- ============ 3. Flota: ciężarówka wjeżdża, ładujemy palety ============ -->
-  <section class="fleet" id="dlaczego-my" aria-labelledby="fleetTitle">
+  <section class="fleet" id="flota" data-land="0.72" aria-labelledby="fleetTitle">
     <div class="fleet__stage">
       <div class="fleet__head">
         <h2 class="section-title" id="fleetTitle" data-split>Każdy centymetr naczepy pracuje.</h2>
@@ -224,7 +241,7 @@
   </section>
 
   <!-- ============ 3b. Dlaczego STItrans: sześć powodów ============ -->
-  <section class="why" id="dlaczego-stitrans" aria-labelledby="whyTitle">
+  <section class="why" id="dlaczego-my" aria-labelledby="whyTitle">
     <div class="why__head">
       <h2 class="section-title" id="whyTitle" data-split>Dlaczego warto wybrać STItrans?</h2>
       <p class="section-lead" data-reveal>STItrans tworzą specjaliści branży TSL. Łączymy wieloletnie doświadczenie z indywidualnym podejściem: Ty skupiasz się na swoim biznesie, my dbamy o terminowość, bezpieczeństwo i koszty transportu.</p>
