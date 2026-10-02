@@ -323,8 +323,7 @@
     const availW = copy.clientWidth - 2 * padPx;
     const sh = stage.clientHeight;
     const block = getComputedStyle(slotBlock).display !== 'none';
-    const room = S.logoRoom(headerH);                  // miejsce pod dużym logo + oddech
-    const hCap = block ? sh * 0.38 / 2.85 : (sh - 250 - (room ? room + 26 : 0)) / 3.2;
+    const hCap = block ? sh * 0.38 / 2.85 : (sh - 250) / 3.2;
     const fs = Math.max(34, Math.min(availW / Math.max(1, widest) * 86, hCap, 212));
     heroTitle.style.fontSize = fs.toFixed(1) + 'px';
   }
@@ -862,7 +861,6 @@
     if (near(heroTop, heroH, y)) renderHero(heroS.cur);
     headerState(y, heroS.cur);
     headerAutoHide(y);
-    S.renderLogo(y);
     renderRail(y);
 
     if (near(stTop, stH, y)) renderStatement(y);
@@ -885,7 +883,6 @@
   function measure() {
     vw = window.innerWidth; vh = window.innerHeight;
     headerH = header.offsetHeight;
-    S.measureLogo();
     heroTop = pageTop(hero); heroH = hero.offsetHeight;
     padPx = parseFloat(getComputedStyle(copy).paddingLeft) || 20;
     fitTitle();
