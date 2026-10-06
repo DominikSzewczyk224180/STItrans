@@ -776,9 +776,21 @@
   const rail = $('#rail'), railFill = $('#railFill');
   const railItems = $$('#rail [data-sec]').map(a => ({ a, el: document.getElementById(a.dataset.sec) }));
   let railTops = [], railEnd = 1, railActive = -1, railLabelT = 0;
+  // Menu w nagłówku podświetla bieżącą sekcję (proces należy do oferty, stopka to kontakt)
+  const NAV_OF = { 'o-nas': 'o-nas', flota: 'flota', 'dlaczego-my': 'dlaczego-my', oferta: 'oferta', 'jak-dzialamy': 'oferta', kariera: 'kariera' };
+  const navLinks = $$('.nav a, .menu__nav a');
+  const footerEl = $('#kontakt');
+  let navActive = null, footerTop = 1e9;
+  function renderNav(sec, line) {
+    const id = line >= footerTop ? 'kontakt' : (NAV_OF[sec] || null);
+    if (id === navActive) return;
+    navActive = id;
+    navLinks.forEach(a => { if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+  }
   function measureRail() {
     railTops = railItems.map(r => pageTop(r.el));
     railEnd = Math.max(1, document.documentElement.scrollHeight - vh);
+    footerTop = pageTop(footerEl);
   }
   function renderRail(y) {
     const line = y + vh * 0.35;
@@ -786,6 +798,7 @@
     while (i < railTops.length - 1 && line >= railTops[i + 1]) i++;
     const next = i < railTops.length - 1 ? railTops[i + 1] : railEnd + vh * 0.35;
     const f = (i + clamp((line - railTops[i]) / Math.max(1, next - railTops[i]))) / (railTops.length - 1);
+    renderNav(railItems[i].a.dataset.sec, line);
     railFill.style.transform = `scaleY(${clamp(f).toFixed(4)})`;
     const dark = header.classList.contains('is-dark');
     rail.classList.toggle('is-dark', dark);

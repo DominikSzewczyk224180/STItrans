@@ -116,6 +116,16 @@ body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;opa
 .is-dark .logo>.logo__dark{opacity:0}
 .is-dark .logo>.logo__light{opacity:1}
 .nav{display:flex;gap:clamp(18px,2.2vw,38px);font-size:15px;font-weight:500}
+/* bieżąca sekcja: cienka kreska pod pozycją menu */
+.nav a{position:relative}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:2px;border-radius:2px;background:var(--indigo);transform:scaleX(0);transform-origin:left center;transition:transform .45s var(--ease-out)}
+.nav a[aria-current="location"]::after{transform:scaleX(1)}
+.site-header.is-dark .nav a::after{background:#fff}
+.menu__nav a[aria-current="location"]{color:var(--indigo)}
+@media (min-width:1081px) and (max-width:1279px){
+  .nav{gap:18px;font-size:14px}
+  .tools{gap:14px;font-size:14px}
+}
 .tools{justify-self:end;display:flex;align-items:center;gap:clamp(14px,1.8vw,26px);font-size:15px}
 .phone{font-weight:500;font-variant-numeric:tabular-nums}
 .lang{display:flex;gap:10px;font-size:13px;font-weight:700;letter-spacing:.04em}
