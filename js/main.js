@@ -16,7 +16,7 @@
   const {
     root, body, RM, $, $$, clamp, lerp, easeOut, easeInOut, easeIn, damp, pageTop, lerpRect, DEG,
     svgEl, P, uid, PL_T, has, tr, fill, i18nHooks, srcText, registerStroke, updateStrokes,
-    LOGO, LOGO_W, WHEEL_R, WHEEL_Y, buildTruck, buildVan, buildLoadPlan, buildCoils, buildStopwatch, buildMap, setPlaying
+    LOGO, LOGO_W, WHEEL_R, WHEEL_Y, buildTruck, buildExpress, buildLoadPlan, buildCoils, buildStopwatch, buildMap, setPlaying
   } = S;
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   if (!location.hash) window.scrollTo(0, 0);
@@ -237,7 +237,7 @@
   const modeArt = {
     ftl: buildTruck(modeSvgs[0], { pallets: 'full', ground: true, logoSrc: LOGO_W }),
     ltl: buildTruck(modeSvgs[1], { pallets: 'mixed', ground: true, logoSrc: LOGO_W }),
-    exp: buildVan(modeSvgs[2], { logoSrc: LOGO_W })
+    exp: buildExpress(modeSvgs[2], { logoSrc: LOGO_W })
   };
   modeSvgs.forEach(s => registerStroke(s, 1.25));
   const MODE_EDGES = [0, 0.36, 0.68, 1];
@@ -258,9 +258,9 @@
     if (idx === 0) dropPallets(modeArt.ftl.pallets, lt);
     if (idx === 1) dropPallets(modeArt.ltl.pallets, lt);
     if (idx === 2) {
-      const x = lerp(-420, 0, easeOut(clamp(lt * 1.8)));
+      const x = lerp(-900, 0, easeOut(clamp(lt * 1.8)));
       modeArt.exp.move.setAttribute('transform', `translate(${x.toFixed(1)} 0)`);
-      const ang = (x / 42) * DEG;
+      const ang = (x / WHEEL_R) * DEG;
       modeArt.exp.wheels.forEach(w => w.g.setAttribute('transform', `rotate(${ang.toFixed(1)} ${w.cx} ${w.cy})`));
       modeArt.exp.speed.forEach((s, i) => { s.style.strokeDashoffset = (1 - clamp(lt * 2.2 - 0.4 - i * 0.12)).toFixed(3); });
     }
@@ -561,7 +561,7 @@
     const kind = el.dataset.art;
     if (kind === 'ftl') { buildTruck(el, { pallets: 'full', ground: true }); registerStroke(el, 1.2); }
     if (kind === 'ltl') { buildTruck(el, { tractor: false, pallets: 'mixed', ground: true }); registerStroke(el, 1.2); }
-    if (kind === 'van') { buildVan(el); registerStroke(el, 1.2); }
+    if (kind === 'exp') { buildExpress(el); registerStroke(el, 1.2); }
     if (kind === 'net') {
       const netMap = buildMap(el, {
         routes: [['Rybnik', 'Praga'], ['Rybnik', 'Berlin'], ['Rybnik', 'Bratysława'], ['Berlin', 'Hamburg'], ['Hamburg', 'Kolding'],

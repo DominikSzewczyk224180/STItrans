@@ -234,11 +234,12 @@ window.STI = (() => {
     }
 
     if (o.trailer && o.pallets !== 'none') {
-      const mixed = o.pallets === 'mixed';
-      const H = mixed ? [134, 134, 110, 0, 96, 122, 122, 0, 134, 88, 0] : Array(11).fill(134);
+      const mixed = o.pallets === 'mixed', express = o.pallets === 'express';
+      const H = mixed ? [134, 134, 110, 0, 96, 122, 122, 0, 134, 88, 0]
+        : express ? [0, 0, 0, 0, 0, 0, 0, 122, 134, 134, 110] : Array(11).fill(134);
       const C = mixed
         ? ['#AEB3E8', '#AEB3E8', '#AEB3E8', '', '#C9CCF0', '#C9CCF0', '#C9CCF0', '', '#E3E4F2', '#E3E4F2', '']
-        : Array(11).fill('#E3E4F2');
+        : express ? Array(11).fill('#AEB3E8') : Array(11).fill('#E3E4F2');
       let n = 0;
       H.forEach((h, i) => {
         if (!h) return;
@@ -283,6 +284,14 @@ window.STI = (() => {
   }
 
   // Bus do ekspresu, widok z boku; ziemia na y = 310
+  // Ekspres: ten sam zestaw (flota to wyłącznie ciągniki siodłowe z naczepami), pilny ładunek i linie prędkości
+  function buildExpress(svg, opt) {
+    const speed = [[-400, 140, -70], [-470, 205, -110], [-390, 270, -80]]
+      .map(([x1, y, x2]) => svgEl('path', { d: P.line(x1, y, x2, y), class: 'tk-speed', pathLength: '1' }, svg));
+    const out = buildTruck(svg, Object.assign({ pallets: 'express', ground: true }, opt || {}));
+    out.speed = speed;
+    return out;
+  }
   function buildVan(svg, opt) {
     const o = Object.assign({ logoSrc: LOGO }, opt || {});
     const out = { wheels: [], move: null, speed: [] };
@@ -550,7 +559,7 @@ window.STI = (() => {
     BASE, root, body, RM, $, $$, clamp, lerp, easeOut, easeInOut, easeIn, damp, pageTop, lerpRect, DEG,
     NS, svgEl, P, uid, I18N, LANGS, PL_T, norm, orphanize, has, tr, fill, i18nHooks, srcText, applyTexts, setLang,
     lang: () => LANG, registerStroke, updateStrokes, LOGO, LOGO_W, WHEEL_R, WHEEL_Y,
-    buildTruck, buildVan, buildLoadPlan, buildCoils, buildStopwatch, EU, geo, CITY, buildMap, setPlaying,
+    buildTruck, buildVan, buildExpress, buildLoadPlan, buildCoils, buildStopwatch, EU, geo, CITY, buildMap, setPlaying,
     setMenu, splitWords, revealIO
   });
 })();
