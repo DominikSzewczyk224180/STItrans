@@ -138,6 +138,16 @@
     select(0);
   });
 
+  /* ---------- Kariera: filtr ofert (wszystkie / kierowcy / biuro) ---------- */
+  $$('.jobs__filter').forEach(group => {
+    const btns = $$('button', group), cards = $$('.job');
+    btns.forEach(b => b.addEventListener('click', () => {
+      const f = b.dataset.filter;
+      btns.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      cards.forEach(c => { c.hidden = !(f === 'all' || c.dataset.cat === f); });
+    }));
+  });
+
   /* ---------- 5. „Czy to ekspres?” i oś czasu zlecenia ---------- */
   const check = $('#check');
   if (check) {
