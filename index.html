@@ -12,11 +12,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,400..700;1,400..700&family=Mulish:wght@300..800&display=swap">
-<link rel="stylesheet" href="css/style.css?v=dc896964">
+<link rel="stylesheet" href="css/style.css?v=bc8bb5ef">
 <!-- Płynne przewijanie (Lenis, MIT), dane mapy (Natural Earth, domena publiczna), tłumaczenia EN/DE, logika strony -->
 <script src="js/vendor/lenis.min.js?v=bc6fcb5d" defer></script>
 <script src="js/europe.js?v=ae457714" defer></script>
-<script src="js/i18n.js?v=f21c036b" defer></script>
+<script src="js/i18n.js?v=fa0036c5" defer></script>
 <script src="js/core.js?v=386d1155" defer></script>
 <script src="js/main.js?v=4deee9f0" defer></script>
 </head>
@@ -372,25 +372,29 @@
   <!-- ============ 5b. Kariera: kierowcy C+E (treść ze stitrans.pl/kariera) ============ -->
   <section class="career" id="kariera" aria-labelledby="careerTitle">
     <div class="career__intro">
-      <h2 class="section-title" id="careerTitle" data-split>Dołącz do zespołu STItrans.</h2>
-      <p class="section-lead" data-reveal>Szukamy kierowców C+E do pracy w podwójnej obsadzie oraz osób do biura. Wszystkie aktualne oferty znajdziesz na naszej stronie kariery i na OLX.</p>
-      <p class="career__pay" data-reveal><small>Kierowcy C+E, podwójna obsada</small><strong>do 16&nbsp;000&nbsp;zł</strong><span>brutto miesięcznie, zależnie od oferty i lokalizacji</span></p>
+      <h2 class="section-title" id="careerTitle" data-split>Kariera w STItrans.</h2>
+      <p class="section-lead" data-reveal>Rośniemy i szukamy ludzi, którzy lubią, gdy wszystko działa na czas. Zatrudniamy kierowców C+E i osoby do biura w kilku miastach w Polsce.</p>
+      <ul class="career__points" data-reveal>
+        <li>Stabilne zatrudnienie i jasne zasady współpracy</li>
+        <li>Zadbana flota i wsparcie dyspozytora 24/7</li>
+        <li>Zespół, który zna branżę od podszewki</li>
+      </ul>
       <div class="career__cta" data-reveal>
-        <a class="btn has-roll" href="kariera.html"><span class="roll"><span class="roll__in"><span>Zobacz aktualne oferty</span><span aria-hidden="true">Zobacz aktualne oferty</span></span></span></a>
-        <a class="link has-roll" href="tel:+48723327526"><span class="roll"><span class="roll__in"><span>Zadzwoń: 723 327 526</span><span aria-hidden="true">Zadzwoń: 723 327 526</span></span></span></a>
+        <a class="btn has-roll" href="kariera.html"><span class="roll"><span class="roll__in"><span>Zobacz oferty pracy</span><span aria-hidden="true">Zobacz oferty pracy</span></span></span></a>
+        <a class="link has-roll" href="mailto:job@stitrans.pl"><span class="roll"><span class="roll__in"><span>job@stitrans.pl</span><span aria-hidden="true">job@stitrans.pl</span></span></span></a>
       </div>
     </div>
-    <div class="career__card" data-reveal>
+    <!-- cała karta prowadzi do strony z ofertami pracy -->
+    <a class="career__card" href="kariera.html" aria-label="Przejdź do ofert pracy" data-reveal>
       <div class="career__art"><svg class="truck" id="careerCab" viewBox="1040 -50 700 470" aria-hidden="true"></svg></div>
-      <dl class="career__facts">
-        <div><dt>Kierowcy C+E</dt><dd>Podwójna obsada, bloki dla e-commerce, auto przypisane do załogi</dd></div>
-        <div><dt>Wyjazdy z</dt><dd>Gliwice, Łódź, Jastrzębie-Zdrój, Bielsko-Biała, Bielany Wrocławskie</dd></div>
-        <div><dt>Forma współpracy</dt><dd>Umowa o pracę, B2B lub zlecenie, zależnie od oferty</dd></div>
-        <div><dt>W biurze</dt><dd>Dyspozytor transportu w Dębicy, młodsza księgowa w Rybniku, młodszy analityk danych</dd></div>
-        <div><dt>W trasie</dt><dd>Dyspozytor dostępny 24/7, serwis na bieżąco, karty flotowe</dd></div>
-        <div><dt>Kontakt</dt><dd>723 327 526, job@stitrans.pl</dd></div>
-      </dl>
-    </div>
+      <h3 class="career__card-title">Aktualne oferty pracy</h3>
+      <p class="career__card-lead">Wszystkie oferty zbieramy na jednej stronie, a rekrutację prowadzimy przez OLX.</p>
+      <div class="career__roles">
+        <div class="career__role"><span class="career__role-name">Kierowcy C+E</span><span class="career__role-desc">Podwójna obsada, różne systemy pracy, wyjazdy z kilku baz w Polsce</span></div>
+        <div class="career__role"><span class="career__role-name">Biuro</span><span class="career__role-desc">Dyspozycja, księgowość i analiza danych</span></div>
+      </div>
+      <span class="career__more">Zobacz wszystkie oferty<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5"/></svg></span>
+    </a>
   </section>
 
   <!-- ============ 5c. Blog: wpisy ze stitrans.pl ============ -->

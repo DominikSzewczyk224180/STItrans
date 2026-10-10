@@ -428,17 +428,24 @@ body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;opa
 .career{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px;align-items:center;padding:clamp(110px,16vh,190px) var(--pad) clamp(60px,9vh,110px);background:var(--paper)}
 .career__intro{grid-column:1 / span 5;display:flex;flex-direction:column;align-items:flex-start;gap:26px}
 .career__intro .section-title{max-width:12ch}
-.career__pay{display:flex;flex-direction:column;gap:6px;margin:6px 0 0}
-.career__pay small{font-size:14px;font-weight:800;color:var(--muted)}
-.career__pay strong{font-family:var(--serif);font-weight:var(--serif-w);font-variation-settings:var(--serif-vs);font-size:clamp(2.4rem,3.8vw,4.2rem);line-height:1;color:var(--indigo)}
-.career__pay span{font-size:16px;color:var(--muted)}
+.career__points{display:grid;gap:12px;margin:2px 0 0;padding:0;list-style:none}
+.career__points li{position:relative;padding-left:30px;font-size:clamp(16px,.35vw + 12px,18px);font-weight:600;line-height:1.5;color:var(--ink)}
+.career__points li::before{content:"";position:absolute;left:4px;top:.6em;width:8px;height:8px;background:var(--indigo);transform:rotate(45deg)}
 .career__cta{display:flex;flex-wrap:wrap;align-items:center;gap:20px 30px}
-.career__card{grid-column:7 / span 6;padding:clamp(22px,2.8vw,40px);border-radius:32px;background:#fff;box-shadow:0 0 0 1px var(--line),0 40px 90px -50px rgba(28,30,58,.35)}
-.career__art{display:grid;place-items:center;margin-bottom:22px;padding:22px 0 14px;border-radius:22px;background:radial-gradient(120% 90% at 30% 20%,#FBFBFE 0%,#EDEEF8 55%,#E3E4F2 100%)}
+.career__card{grid-column:7 / span 6;display:block;padding:clamp(22px,2.8vw,40px);border-radius:32px;background:#fff;box-shadow:0 0 0 1px var(--line),0 40px 90px -50px rgba(28,30,58,.35);color:inherit}
+.career .career__card.is-in{transition:opacity 1s var(--ease-out) .15s,transform .55s var(--ease-out),box-shadow .55s var(--ease-out)}
+.career .career__card.is-in:hover{transform:translate3d(0,-6px,0);box-shadow:0 0 0 1px var(--indigo-soft),0 50px 100px -48px rgba(28,30,58,.45)}
+.career__card:focus-visible{outline:2px solid var(--indigo);outline-offset:4px}
+.career__art{display:grid;place-items:center;margin-bottom:24px;padding:22px 0 14px;border-radius:22px;background:radial-gradient(120% 90% at 30% 20%,#FBFBFE 0%,#EDEEF8 55%,#E3E4F2 100%)}
 .career__art .truck{width:min(56%,300px);height:auto}
-.career__facts div{display:grid;grid-template-columns:minmax(110px,28%) minmax(0,1fr);gap:18px;padding:15px 0;border-top:1px solid var(--line);font-size:16px}
-.career__facts dt{font-weight:800;color:var(--ink)}
-.career__facts dd{color:var(--graphite)}
+.career__card-title{margin:0 0 8px;font-family:var(--serif);font-weight:var(--serif-w);font-variation-settings:var(--serif-vs);font-size:clamp(1.6rem,2.2vw,2.2rem);line-height:1.1;color:var(--ink)}
+.career__card-lead{margin:0 0 20px;font-size:16px;line-height:1.55;color:var(--graphite)}
+.career__role{display:grid;grid-template-columns:minmax(120px,28%) minmax(0,1fr);gap:18px;padding:15px 0;border-top:1px solid var(--line);font-size:16px}
+.career__role-name{font-weight:800;color:var(--ink)}
+.career__role-desc{color:var(--graphite)}
+.career__more{display:flex;align-items:center;gap:10px;padding-top:18px;border-top:1px solid var(--line);font-weight:800;color:var(--indigo)}
+.career__more svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s var(--ease-out)}
+.career__card:hover .career__more svg{transform:translateX(6px)}
 
 /* ---------- Blog ---------- */
 .blog{padding:clamp(80px,12vh,150px) var(--pad) clamp(110px,16vh,180px);background:var(--paper)}
@@ -655,7 +662,7 @@ body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;opa
   .blog__grid{grid-template-columns:1fr}
   .blog__grid .post:last-child{display:block}
   .why__list li{grid-template-columns:52px minmax(0,1fr);padding:26px 0}
-  .career__facts div{grid-template-columns:1fr;gap:4px}
+  .career__role{grid-template-columns:1fr;gap:4px}
   .finale{height:calc((100vw - 2 * var(--pad)) * .3)}
   .finale__truck{width:44vw}
   .footer__cols{grid-template-columns:1fr 1fr}
