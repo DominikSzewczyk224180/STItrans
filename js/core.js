@@ -320,6 +320,95 @@ window.STI = (() => {
     place(o.at);
     return { route, box, place, truck };
   }
+  // Okładka „Linie”: ta sama scena w kadrze 640×400, magazyny bliżej, droga z perspektywą na dole
+  function buildLinehaulCover(svg, opt) {
+    const o = Object.assign({ logoSrc: LOGO_W }, opt || {});
+    const g = svgEl('g', {}, svg);
+    const G = 262;
+    svgEl('path', { d: P.line(20, G, 620, G), class: 'lh-ground' }, g);
+    // pasy drogi uciekające w dół, żeby dolna część kadru nie była pusta
+    [[300, 600, 0.55], [340, 760, 0.35], [380, 920, 0.2]].forEach(([y, half, op]) => {
+      svgEl('path', { d: P.line(320 - half / 2, y, 320 + half / 2, y), class: 'lh-lane', style: `opacity:${op}` }, g);
+    });
+    svgEl('path', { d: `M320 ${G + 8}L320 400`, class: 'lh-centre' }, g);
+    const house = x => {
+      const w = 150, top = G - 96;
+      svgEl('path', { d: `M${x} ${G}V${top}L${x + w / 2} ${top - 38}L${x + w} ${top}V${G}`, class: 'lh-house' }, g);
+      svgEl('path', { d: P.line(x, top, x + w, top), class: 'lh-soft' }, g);
+      for (let i = 0; i < 3; i++) svgEl('path', { d: P.rect(x + 16 + i * 42, G - 58, 32, 58, 2), class: 'lh-door' }, g);
+      svgEl('path', { d: P.rect(x + w / 2 - 18, top - 22, 36, 9, 2), class: 'lh-sign' }, g);
+    };
+    house(34); house(456);
+    const route = svgEl('path', { d: `M196 ${G - 74}C270 ${G - 150} 370 ${G - 150} 444 ${G - 74}`, class: 'lh-route', pathLength: '1' }, g);
+    const K = 0.118, X0 = 186, X1 = 456 - 1700 * K - 8;
+    const box = svgEl('g', { class: 'lh-truck' }, g);
+    const truck = buildTruck(box, { pallets: 'full', ground: false, logoSrc: o.logoSrc });
+    registerStroke(svg, 1.2, box, K);
+    const place = k => box.setAttribute('transform', `translate(${lerp(X0, X1, clamp(k)).toFixed(1)} ${(G - 400 * K).toFixed(1)}) scale(${K})`);
+    place(0.5);
+    return { route, box, place, truck };
+  }
+  // Pętla: zestaw przejeżdża między magazynami, znika przy rampie i rusza od nowa (tylko gdy rysunek jest widoczny)
+  function loopLinehaul(svg, lh, period) {
+    if (RM) { lh.place(0.5); return; }
+    const T = period || 6200;
+    let raf = 0, t0 = 0, on = false;
+    const tick = now => {
+      if (!t0) t0 = now;
+      const p = ((now - t0) % T) / T;
+      const k = p < 0.78 ? (p / 0.78) : 1;
+      lh.place(k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+      lh.box.style.opacity = p < 0.06 ? (p / 0.06).toFixed(2) : p > 0.86 ? Math.max(0, 1 - (p - 0.86) / 0.1).toFixed(2) : '1';
+      lh.route.style.strokeDashoffset = (-(now - t0) / 9000).toFixed(3);
+      if (on) raf = requestAnimationFrame(tick);
+    };
+    new IntersectionObserver(([e]) => {
+      on = e.isIntersecting;
+      if (on && !raf) raf = requestAnimationFrame(tick);
+      if (!on) { cancelAnimationFrame(raf); raf = 0; }
+    }).observe(svg);
+  }
+  // FMCG: palety z kartonami owinięte folią i tarcza (bezpieczeństwo towaru)
+  function buildPallets(svg) {
+    const g = svgEl('g', {}, svg);
+    const F = 318;
+    svgEl('path', { d: P.line(60, F, 580, F), class: 'cv-floor' }, g);
+    const stack = (x, rows) => {
+      svgEl('path', { d: P.rect(x, F - 14, 132, 14, 2), class: 'pl-base' }, g);
+      [x + 8, x + 60, x + 112].forEach(fx => svgEl('path', { d: P.rect(fx, F - 14, 12, 14, 1), class: 'pl-foot' }, g));
+      let y = F - 14;
+      rows.forEach((cols, r) => {
+        const h = 34, w = 132 / cols;
+        for (let i = 0; i < cols; i++) svgEl('path', { d: P.rect(x + i * w + 2, y - h, w - 4, h - 3, 2), class: 'pl-box', style: `--ci:${r * 3 + i}` }, g);
+        y -= h;
+      });
+      svgEl('path', { d: `M${x} ${F - 18}L${x + 132} ${y + 8}M${x} ${y + 30}L${x + 132} ${F - 40}`, class: 'pl-wrap' }, g);
+    };
+    stack(78, [3, 3, 2, 2]); stack(254, [2, 3, 3]);
+    const sx = 492, sy = 176;
+    svgEl('path', { d: `M${sx} ${sy - 54}l46 16v34c0 32-22 50-46 60c-24-10-46-28-46-60v-34z`, class: 'pl-shield' }, g);
+    svgEl('path', { d: `M${sx - 20} ${sy + 4}l14 14l28-30`, class: 'pl-check', pathLength: '1' }, g);
+  }
+  // Tekstylia: wieszak z ubraniami i karton gotowy do wysyłki
+  function buildHangers(svg) {
+    const g = svgEl('g', {}, svg);
+    const R = 120, F = 318;
+    svgEl('path', { d: P.line(60, F, 580, F), class: 'cv-floor' }, g);
+    svgEl('path', { d: `M90 ${R}H430M110 ${R}V${F}M410 ${R}V${F}M96 ${F}h28M396 ${F}h28`, class: 'hg-rail' }, g);
+    const shapes = [
+      x => `M${x - 34} ${R + 34}l18 -12h32l18 12l-10 18h-8v86h-32v-86h-8z`,            // koszula
+      x => `M${x - 26} ${R + 22}h52l12 120h-76z`,                                    // sukienka
+      x => `M${x - 30} ${R + 26}l14 -6h32l14 6v116h-24l-6 -60l-6 60h-24z`,           // spodnie i góra
+      x => `M${x - 34} ${R + 34}l18 -12h32l18 12l-10 18h-8v86h-32v-86h-8z`
+    ];
+    [150, 222, 294, 366].forEach((x, i) => {
+      svgEl('path', { d: `M${x} ${R}c0 -10 10 -10 10 -2M${x} ${R}v6l-24 12h48z`, class: 'hg-hook' }, g);
+      svgEl('path', { d: shapes[i](x), class: 'hg-cloth', style: `--ci:${i}` }, g);
+    });
+    svgEl('path', { d: P.rect(462, F - 92, 110, 92, 3), class: 'hg-box' }, g);
+    svgEl('path', { d: `M462 ${F - 60}H572M517 ${F - 92}V${F - 60}`, class: 'hg-tape' }, g);
+  }
+
   // Szczyt sezonu: tygodniowe wolumeny rosną do szczytu przed świętami
   function buildPeak(svg) {
     const g = svgEl('g', {}, svg);
@@ -619,7 +708,7 @@ window.STI = (() => {
     BASE, root, body, RM, $, $$, clamp, lerp, easeOut, easeInOut, easeIn, damp, pageTop, lerpRect, DEG,
     NS, svgEl, P, uid, I18N, LANGS, PL_T, norm, orphanize, has, tr, fill, i18nHooks, srcText, applyTexts, setLang,
     lang: () => LANG, registerStroke, updateStrokes, LOGO, LOGO_W, WHEEL_R, WHEEL_Y,
-    buildTruck, buildVan, buildExpress, buildLinehaul, buildPeak, buildWeek, buildLoadPlan, buildCoils, buildStopwatch, EU, geo, CITY, buildMap, setPlaying,
+    buildTruck, buildVan, buildExpress, buildLinehaul, buildLinehaulCover, loopLinehaul, buildPallets, buildHangers, buildPeak, buildWeek, buildLoadPlan, buildCoils, buildStopwatch, EU, geo, CITY, buildMap, setPlaying,
     setMenu, splitWords, revealIO
   });
 })();

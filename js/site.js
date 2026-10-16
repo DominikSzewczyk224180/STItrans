@@ -10,7 +10,7 @@
 (() => {
   'use strict';
   const S = window.STI;
-  const { $, $$, body, RM, clamp, tr, PL_T, i18nHooks, registerStroke, updateStrokes, svgEl, P, LOGO_W, buildLoadPlan, buildCoils, buildStopwatch, buildLinehaul, buildPeak, buildWeek } = S;
+  const { $, $$, body, RM, clamp, tr, PL_T, i18nHooks, registerStroke, updateStrokes, svgEl, P, LOGO_W, buildLoadPlan, buildCoils, buildStopwatch, buildLinehaul, buildLinehaulCover, loopLinehaul, buildPallets, buildHangers, buildPeak, buildWeek } = S;
 
   /* ---------- 1. Nagłówek i płynne przewijanie ---------- */
   const header = $('#header');
@@ -51,7 +51,9 @@
     if (kind === 'plan') buildLoadPlan(svg);
     if (kind === 'coils') buildCoils(svg);
     if (kind === 'watch') buildStopwatch(svg);
-    if (kind === 'line') buildLinehaul(svg, { at: 0.5, logoSrc: LOGO_W });
+    if (kind === 'line') loopLinehaul(svg, buildLinehaulCover(svg, { logoSrc: LOGO_W }));
+    if (kind === 'pallets') buildPallets(svg);
+    if (kind === 'hangers') buildHangers(svg);
     if (kind === 'peak') buildPeak(svg);
     if (kind === 'week') buildWeek(svg);
     registerStroke(svg, 1.2);
@@ -59,8 +61,8 @@
 
   /* ---------- 3. Kalkulator FTL / LTL ---------- */
   Object.assign(PL_T, {
-    'calc.ltl': 'Płacisz tylko za miejsca, które zajmujesz. Przy kilku paletach to zwykle najkorzystniejsza opcja.',
-    'calc.both': 'W tym przedziale o cenie decydują trasa, waga i termin. Wycenimy LTL i FTL, żebyś mógł porównać.',
+    'calc.ltl': 'Przy kilku paletach zwykle najtaniej wyjdzie grupaż w sieci drobnicowej. My specjalizujemy się w transporcie dedykowanym, więc jeśli termin jest krytyczny, zaznacz to powyżej.',
+    'calc.both': 'W tym przedziale o opłacalności decydują trasa, waga i termin. Wycenimy całą naczepę, żebyś mógł porównać ją z ofertą grupażową.',
     'calc.ftl': 'Przy takiej liczbie palet cała naczepa zwykle wychodzi korzystniej, a towar jedzie bez przeładunków.',
     'calc.exp': 'Mały, pilny albo delikatny ładunek najlepiej wysłać dedykowanym pojazdem, bez przeładunków po drodze.',
     'calc.ftl.urgent': 'Duży ładunek z krytycznym terminem jedzie najbezpieczniej jako pełna naczepa, prosto do odbiorcy.',
@@ -104,12 +106,13 @@
         if (n <= 10) { mode = 'Ekspres'; title = 'Transport ekspresowy'; text = 'calc.exp'; }
         else { mode = 'FTL'; title = 'Transport całopojazdowy (FTL)'; text = 'calc.ftl.urgent'; }
       } else if (n <= 10) { mode = 'LTL'; title = 'Transport częściowy (LTL)'; text = 'calc.ltl'; }
-      else if (n <= 17) { mode = 'Nie wiem'; title = 'Wycenimy oba warianty'; text = 'calc.both'; }
+      else if (n <= 17) { mode = 'FTL'; title = 'Warto policzyć całą naczepę'; text = 'calc.both'; }
       else { mode = 'FTL'; title = 'Transport całopojazdowy (FTL)'; text = 'calc.ftl'; }
       verdict.textContent = tr(title);
       why.textContent = tr(text);
       calc.dataset.mode = mode;
-      cta.setAttribute('href', quoteHref({ cargo: mode, palety: n }));
+      // formularz zna modele współpracy; przy drobnicy zostawiamy „Jeszcze nie wiem”
+      cta.setAttribute('href', quoteHref({ model: mode === 'LTL' ? 'Nie wiem' : mode }));
     }
     range.addEventListener('input', render);
     urgent.addEventListener('change', render);

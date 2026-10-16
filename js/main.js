@@ -16,7 +16,7 @@
   const {
     root, body, RM, $, $$, clamp, lerp, easeOut, easeInOut, easeIn, damp, pageTop, lerpRect, DEG,
     svgEl, P, uid, PL_T, has, tr, fill, i18nHooks, srcText, registerStroke, updateStrokes,
-    LOGO, LOGO_W, WHEEL_R, WHEEL_Y, buildTruck, buildExpress, buildLinehaul, buildPeak, buildWeek, buildLoadPlan, buildCoils, buildStopwatch, buildMap, setPlaying
+    LOGO, LOGO_W, WHEEL_R, WHEEL_Y, buildTruck, buildExpress, buildLinehaul, buildLinehaulCover, loopLinehaul, buildPallets, buildHangers, buildPeak, buildWeek, buildLoadPlan, buildCoils, buildStopwatch, buildMap, setPlaying
   } = S;
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   if (!location.hash) window.scrollTo(0, 0);
@@ -545,7 +545,9 @@
     if (kind === 'plan') buildLoadPlan(svg);
     if (kind === 'coils') buildCoils(svg);
     if (kind === 'watch') buildStopwatch(svg);
-    if (kind === 'line') buildLinehaul(svg, { at: 0.5, logoSrc: LOGO_W });
+    if (kind === 'line') loopLinehaul(svg, buildLinehaulCover(svg, { logoSrc: LOGO_W }));
+    if (kind === 'pallets') buildPallets(svg);
+    if (kind === 'hangers') buildHangers(svg);
     if (kind === 'peak') buildPeak(svg);
     if (kind === 'week') buildWeek(svg);
     registerStroke(svg, 1.2);
