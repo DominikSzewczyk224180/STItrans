@@ -423,10 +423,10 @@
     words.forEach((w, i) => {
       const s = document.createElement('span');
       s.className = 'sw';
-      s.textContent = w;
+      // spacja w środku słowa: Safari przy kopiowaniu nie gubi jej w miejscu łamania linii
+      s.textContent = i < words.length - 1 ? w + ' ' : w;
       stText.appendChild(s);
       stWords.push(s);
-      if (i < words.length - 1) stText.appendChild(document.createTextNode(' '));
     });
     stFilled = -1;
   }

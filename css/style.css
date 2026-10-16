@@ -298,7 +298,7 @@ body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;opa
 .statement__text .sw.on{color:var(--ink)}
 .statement__foot{width:min(100%,1100px);margin-top:clamp(32px,6vh,64px);opacity:var(--foot,0);transform:translate3d(0,calc((1 - var(--foot,0)) * 18px),0)}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(16px,3vw,48px)}
-.stats div{display:flex;flex-direction:column-reverse;align-items:center;gap:10px;padding-top:20px;border-top:1px solid var(--line)}
+.stats div{display:flex;flex-direction:column-reverse;justify-content:flex-end;align-items:center;gap:10px;padding-top:20px;border-top:1px solid var(--line)}
 .stats dd{font-family:var(--serif);font-weight:var(--serif-w);font-variation-settings:var(--serif-vs);font-size:clamp(2.6rem,4.4vw,4.8rem);line-height:1;color:var(--indigo);white-space:nowrap;font-variant-numeric:lining-nums tabular-nums}
 .stats dt{font-size:clamp(14px,.3vw + 11px,16px);font-weight:600;color:var(--muted)}
 
@@ -719,15 +719,30 @@ body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;opa
 }
 
 
-/* ---------- Hero (komputer): hasło po lewej, opis i przyciski po prawej, wyrównane do dołu hasła ---------- */
+/* ---------- Hero (komputer): hasło po lewej; opis i przyciski w jednej kolumnie po prawej ---------- */
 @media (min-width:1081px){
-  .hero__copy{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,31%);grid-template-rows:minmax(0,1fr) auto auto auto minmax(0,.6fr);column-gap:clamp(40px,5vw,96px);align-items:end}
+  .hero__copy{display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,32%);grid-template-rows:minmax(0,1fr) auto auto minmax(0,.6fr);column-gap:clamp(40px,5vw,96px);align-items:end}
   .hero__eyebrow{grid-column:1;grid-row:2}
   .hero__title{grid-column:1;grid-row:3}
   .hero__foot{display:contents}
-  .hero__lead{grid-column:2;grid-row:2 / span 2;align-self:end;max-width:38ch;margin-bottom:.35em;padding-left:clamp(18px,1.6vw,26px);border-left:2px solid var(--indigo)}
-  .hero__cta{grid-column:2;grid-row:4;margin-top:clamp(22px,3.4vh,36px);padding-left:clamp(18px,1.6vw,26px)}
-  .hero__hint{grid-column:1;grid-row:5;align-self:end}
+  .hero__side{grid-column:2;grid-row:2 / span 2;align-self:end;display:flex;flex-direction:column;align-items:flex-start;gap:clamp(22px,3vh,30px)}
+  .hero__side::before{content:"";width:48px;height:2px;border-radius:2px;background:var(--indigo)}
+  .hero__lead{margin:0;max-width:36ch}
+  .hero__cta{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;margin:0}
+  .hero__hint{grid-column:1;grid-row:4;align-self:end}
+}
+@media (max-width:1080px){
+  .hero__side{display:contents}
+  .hero__cta{display:flex;flex-wrap:wrap;gap:10px;grid-column:1 / -1;grid-row:2}
+  .hero__hint{grid-column:1 / -1;grid-row:3;justify-self:start}
+}
+@media (max-width:600px){
+  .hero__cta{flex-direction:column;align-items:stretch}
+  .hero__cta .btn{justify-content:center;text-align:center}
+}
+/* przycisk obrysowany: ta sama wysokość i kształt co główny */
+.btn--ghost{background:transparent;color:var(--indigo);box-shadow:inset 0 0 0 1.5px currentColor}
+.btn--ghost:hover,.btn--ghost:focus-visible{background:var(--indigo);color:#fff}
 }
 
 

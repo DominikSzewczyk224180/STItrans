@@ -59,15 +59,10 @@
     registerStroke(svg, 1.2);
   });
 
-  /* ---------- 3. Kalkulator FTL / LTL ---------- */
+  /* ---------- 3. Teksty testu „Czy to ekspres?” i link do formularza ---------- */
   Object.assign(PL_T, {
-    'calc.ltl': 'Przy kilku paletach zwykle najtaniej wyjdzie grupaż w sieci drobnicowej. My specjalizujemy się w transporcie dedykowanym, więc jeśli termin jest krytyczny, zaznacz to powyżej.',
-    'calc.both': 'W tym przedziale o opłacalności decydują trasa, waga i termin. Wycenimy całą naczepę, żebyś mógł porównać ją z ofertą grupażową.',
-    'calc.ftl': 'Przy takiej liczbie palet cała naczepa zwykle wychodzi korzystniej, a towar jedzie bez przeładunków.',
-    'calc.exp': 'Mały, pilny albo delikatny ładunek najlepiej wysłać dedykowanym pojazdem, bez przeładunków po drodze.',
-    'calc.ftl.urgent': 'Duży ładunek z krytycznym terminem jedzie najbezpieczniej jako pełna naczepa, prosto do odbiorcy.',
     'check.0': 'Prawdopodobnie wystarczy transport standardowy.',
-    'check.0.why': 'Jeśli termin ma zapas, FTL albo LTL wyjdzie taniej.',
+    'check.0.why': 'Jeśli termin ma zapas, zwykły transport dedykowany wyjdzie taniej niż ekspres.',
     'check.2': 'Warto rozważyć ekspres.',
     'check.2.why': 'Wycenimy ekspres i transport standardowy, żebyś mógł porównać koszt z ryzykiem opóźnienia.',
     'check.4': 'To zadanie dla ekspresu.',
@@ -79,46 +74,6 @@
     if (S.lang() !== 'pl') q.set('lang', S.lang());
     return `../index.html?${q.toString()}#wycena`;
   };
-
-  const calc = $('#calc');
-  if (calc) {
-    const range = $('#calcPallets'), out = $('#calcOut'), urgent = $('#calcUrgent'), pct = $('#calcPct');
-    const verdict = $('#calcVerdict'), why = $('#calcWhy'), cta = $('#calcCta'), svg = $('.calc__svg', calc);
-    const X0 = 36, Y0 = 34, W = 506, H = 132, cw = W / 11, chh = H / 3, cells = [];
-    svgEl('path', { d: P.rect(X0 - 10, Y0 - 10, W + 20, H + 20, 10), class: 'cv-trailer' }, svg);
-    svgEl('path', { d: P.rect(X0 + W + 22, Y0 + 12, 56, H - 24, 14), class: 'cv-trailer' }, svg);   // ciągnik z góry
-    svgEl('path', { d: P.line(X0 + W + 66, Y0 + 22, X0 + W + 66, Y0 + H - 22), class: 'calc__ink' }, svg);
-    // palety ładowane od tyłu naczepy, rząd po rzędzie
-    for (let c = 0; c < 11; c++) {
-      for (let r = 0; r < 3; r++) {
-        cells.push(svgEl('path', { d: P.rect(+(X0 + c * cw + 3).toFixed(1), +(Y0 + r * chh + 3).toFixed(1), +(cw - 6).toFixed(1), +(chh - 6).toFixed(1), 3), class: 'calc__cell' }, svg));
-      }
-    }
-    registerStroke(svg, 1.2);
-    function render() {
-      const n = +range.value, u = urgent.checked;
-      out.textContent = String(n);
-      pct.textContent = String(Math.round(n / 33 * 100));
-      range.setAttribute('aria-valuetext', `${n} / 33`);
-      cells.forEach((el, i) => el.classList.toggle('is-on', i < n));
-      let mode, title, text;
-      if (u) {
-        if (n <= 10) { mode = 'Ekspres'; title = 'Transport ekspresowy'; text = 'calc.exp'; }
-        else { mode = 'FTL'; title = 'Transport całopojazdowy (FTL)'; text = 'calc.ftl.urgent'; }
-      } else if (n <= 10) { mode = 'LTL'; title = 'Transport częściowy (LTL)'; text = 'calc.ltl'; }
-      else if (n <= 17) { mode = 'FTL'; title = 'Warto policzyć całą naczepę'; text = 'calc.both'; }
-      else { mode = 'FTL'; title = 'Transport całopojazdowy (FTL)'; text = 'calc.ftl'; }
-      verdict.textContent = tr(title);
-      why.textContent = tr(text);
-      calc.dataset.mode = mode;
-      // formularz zna modele współpracy; przy drobnicy zostawiamy „Jeszcze nie wiem”
-      cta.setAttribute('href', quoteHref({ model: mode === 'LTL' ? 'Nie wiem' : mode }));
-    }
-    range.addEventListener('input', render);
-    urgent.addEventListener('change', render);
-    i18nHooks.push(render);
-    render();
-  }
 
   /* ---------- 4. Branże: zakładki z obsługą strzałek ---------- */
   $$('.tabs').forEach(box => {
