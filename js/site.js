@@ -10,7 +10,7 @@
 (() => {
   'use strict';
   const S = window.STI;
-  const { $, $$, body, RM, clamp, tr, PL_T, i18nHooks, registerStroke, updateStrokes, svgEl, P, buildLoadPlan, buildCoils, buildStopwatch } = S;
+  const { $, $$, body, RM, clamp, tr, PL_T, i18nHooks, registerStroke, updateStrokes, svgEl, P, LOGO_W, buildLoadPlan, buildCoils, buildStopwatch, buildLinehaul, buildPeak, buildWeek } = S;
 
   /* ---------- 1. Nagłówek i płynne przewijanie ---------- */
   const header = $('#header');
@@ -51,6 +51,9 @@
     if (kind === 'plan') buildLoadPlan(svg);
     if (kind === 'coils') buildCoils(svg);
     if (kind === 'watch') buildStopwatch(svg);
+    if (kind === 'line') buildLinehaul(svg, { at: 0.5, logoSrc: LOGO_W });
+    if (kind === 'peak') buildPeak(svg);
+    if (kind === 'week') buildWeek(svg);
     registerStroke(svg, 1.2);
   });
 
@@ -159,7 +162,7 @@
       verdict.textContent = tr(key);
       why.textContent = tr(key + '.why');
       check.style.setProperty('--n', String(n / boxes.length));
-      cta.setAttribute('href', quoteHref({ cargo: n >= 2 ? 'Ekspres' : 'Nie wiem' }));
+      cta.setAttribute('href', quoteHref({ model: n >= 2 ? 'Ekspres' : 'Nie wiem' }));
     }
     boxes.forEach(b => b.addEventListener('change', render));
     i18nHooks.push(render);

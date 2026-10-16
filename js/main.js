@@ -16,7 +16,7 @@
   const {
     root, body, RM, $, $$, clamp, lerp, easeOut, easeInOut, easeIn, damp, pageTop, lerpRect, DEG,
     svgEl, P, uid, PL_T, has, tr, fill, i18nHooks, srcText, registerStroke, updateStrokes,
-    LOGO, LOGO_W, WHEEL_R, WHEEL_Y, buildTruck, buildExpress, buildLoadPlan, buildCoils, buildStopwatch, buildMap, setPlaying
+    LOGO, LOGO_W, WHEEL_R, WHEEL_Y, buildTruck, buildExpress, buildLinehaul, buildPeak, buildWeek, buildLoadPlan, buildCoils, buildStopwatch, buildMap, setPlaying
   } = S;
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   if (!location.hash) window.scrollTo(0, 0);
@@ -235,8 +235,8 @@
   const modeCopies = $$('.mode', modesEl);
   const modeSvgs = $$('[data-mode-art]', modesEl);
   const modeArt = {
-    ftl: buildTruck(modeSvgs[0], { pallets: 'full', ground: true, logoSrc: LOGO_W }),
-    ltl: buildTruck(modeSvgs[1], { pallets: 'mixed', ground: true, logoSrc: LOGO_W }),
+    line: buildLinehaul(modeSvgs[0], { logoSrc: LOGO_W, at: 0, px: 1.25 }),
+    ftl: buildTruck(modeSvgs[1], { pallets: 'full', ground: true, logoSrc: LOGO_W }),
     exp: buildExpress(modeSvgs[2], { logoSrc: LOGO_W })
   };
   modeSvgs.forEach(s => registerStroke(s, 1.25));
@@ -255,8 +255,11 @@
       [modeTabs, modeCopies, modeSvgs].forEach(list => list.forEach((el, i) => el.classList.toggle('is-on', i === idx)));
     }
     modeTabs.forEach((el, i) => el.style.setProperty('--mp', i < idx ? '1' : i === idx ? lt.toFixed(3) : '0'));
-    if (idx === 0) dropPallets(modeArt.ftl.pallets, lt);
-    if (idx === 1) dropPallets(modeArt.ltl.pallets, lt);
+    if (idx === 0) {                                   // zestaw jedzie z jednego centrum do drugiego
+      modeArt.line.place(RM ? 0.5 : easeInOut(clamp(lt * 1.25)));
+      modeArt.line.route.style.strokeDashoffset = (-lt * 0.35).toFixed(3);
+    }
+    if (idx === 1) dropPallets(modeArt.ftl.pallets, lt);
     if (idx === 2) {
       const x = lerp(-900, 0, easeOut(clamp(lt * 1.8)));
       modeArt.exp.move.setAttribute('transform', `translate(${x.toFixed(1)} 0)`);
@@ -323,8 +326,9 @@
     const availW = copy.clientWidth - 2 * padPx;
     const sh = stage.clientHeight;
     const block = getComputedStyle(slotBlock).display !== 'none';
-    const hCap = block ? sh * 0.38 / 2.85 : (sh - 250) / 3.2;
-    const fs = Math.max(34, Math.min(availW / Math.max(1, widest) * 86, hCap, 212));
+    // hasło mniejsze niż wcześniej (prośba właścicielki): więcej miejsca na komunikat o e-commerce
+    const hCap = block ? sh * 0.3 / 2.85 : (sh - 280) / 5;
+    const fs = Math.max(30, Math.min(availW / Math.max(1, widest) * 54, hCap, 140));
     heroTitle.style.fontSize = fs.toFixed(1) + 'px';
   }
   function measureSlot() {
@@ -518,7 +522,7 @@
   }
 
   // Dlaczego STItrans: powód najbliżej środka ekranu jest wyraźny, reszta przygaszona
-  const whySec = $('#dlaczego-my');
+  const whySec = $('#e-commerce');
   const whyItems = $$('.why__list li');
   let whyTop = 0, whyH = 1, whyBest = -1;
   function renderWhy() {
@@ -541,6 +545,9 @@
     if (kind === 'plan') buildLoadPlan(svg);
     if (kind === 'coils') buildCoils(svg);
     if (kind === 'watch') buildStopwatch(svg);
+    if (kind === 'line') buildLinehaul(svg, { at: 0.5, logoSrc: LOGO_W });
+    if (kind === 'peak') buildPeak(svg);
+    if (kind === 'week') buildWeek(svg);
     registerStroke(svg, 1.2);
   });
 
@@ -559,6 +566,7 @@
   }
   $$('[data-art]').forEach(el => {
     const kind = el.dataset.art;
+    if (kind === 'line') { buildLinehaul(el, { at: 0.5 }); registerStroke(el, 1.2); }
     if (kind === 'ftl') { buildTruck(el, { pallets: 'full', ground: true }); registerStroke(el, 1.2); }
     if (kind === 'ltl') { buildTruck(el, { tractor: false, pallets: 'mixed', ground: true }); registerStroke(el, 1.2); }
     if (kind === 'exp') { buildExpress(el); registerStroke(el, 1.2); }
@@ -643,7 +651,8 @@
   const stepDots = $$('.form__steps li', form);
   const btnBack = $('#formBack'), btnNext = $('#formNext'), btnSubmit = $('#formSubmit');
   const stepLive = $('#stepLive');
-  const STEP_NAMES = ['trasa', 'ładunek', 'kontakt'];
+  const STEP_NAMES = ['współpraca', 'szczegóły', 'kontakt'];
+  PL_T['form.done'] = '{name}dziękujemy za zapytanie ({model}). Odezwiemy się, żeby omówić szczegóły współpracy.';
   let formStep = 0;
   form.addEventListener('input', e => {
     const f = e.target.closest('.field');
@@ -691,7 +700,8 @@
     if (!validatePage(pages[formStep])) return;
     const d = new FormData(form);
     const first = String(d.get('name') || '').trim().split(/\s+/)[0];
-    let msg = fill(tr('form.done'), { name: first ? first + ', ' : '', from: d.get('from'), to: d.get('to'), cargo: tr(String(d.get('cargo'))) });
+    const picked = form.querySelector('input[name="model"]:checked + span');
+    let msg = fill(tr('form.done'), { name: first ? first + ', ' : '', model: picked ? picked.textContent.toLowerCase() : '' });
     if (!first) msg = msg.charAt(0).toUpperCase() + msg.slice(1);
     $('#formDoneText').textContent = msg;
     form.hidden = true;
@@ -700,20 +710,16 @@
     measure();
     kick();
   });
-  // Wejście z kalkulatora na blogu (?cargo=LTL&palety=8) od razu uzupełnia formularz
-  PL_T['form.pallets'] = 'Liczba palet: {n}';
+  // Wejście z bloga albo case study (?model=Ekspres) od razu zaznacza model współpracy
   {
     const q = new URLSearchParams(location.search);
-    const cargo = q.get('cargo'), pallets = parseInt(q.get('palety'), 10);
-    const r = cargo && form.querySelector(`input[name="cargo"][value="${cargo.replace(/"/g, '')}"]`);
+    const model = q.get('model') || q.get('cargo');
+    const r = model && form.querySelector(`input[name="model"][value="${model.replace(/"/g, '')}"]`);
     if (r) r.checked = true;
-    const msg = $('#fMsg');
-    if (pallets > 0 && msg && !msg.value) msg.value = fill(tr('form.pallets'), { n: pallets });
   }
-
-  // „Zapytaj o transport FTL” od razu zaznacza rodzaj transportu w formularzu
-  $$('[data-cargo]').forEach(a => a.addEventListener('click', () => {
-    const r = form.querySelector(`input[name="cargo"][value="${a.dataset.cargo}"]`);
+  // „Zapytaj o linie” i pozostałe przyciski w usługach zaznaczają model w formularzu
+  $$('[data-model]').forEach(a => a.addEventListener('click', () => {
+    const r = form.querySelector(`input[name="model"][value="${a.dataset.model}"]`);
     if (r) r.checked = true;
   }));
 
@@ -777,12 +783,12 @@
   const railItems = $$('#rail [data-sec]').map(a => ({ a, el: document.getElementById(a.dataset.sec) }));
   let railTops = [], railEnd = 1, railActive = -1, railLabelT = 0;
   // Menu w nagłówku podświetla bieżącą sekcję (proces należy do oferty, stopka to kontakt)
-  const NAV_OF = { 'o-nas': 'o-nas', flota: 'flota', 'dlaczego-my': 'dlaczego-my', oferta: 'oferta', 'jak-dzialamy': 'oferta', kariera: 'kariera' };
+  const NAV_OF = { 'e-commerce': 'e-commerce', 'case-study': 'case-study', oferta: 'oferta', 'jak-dzialamy': 'oferta', flota: 'flota', kariera: 'kariera', wycena: 'wycena' };
   const navLinks = $$('.nav a, .menu__nav a');
   const footerEl = $('#kontakt');
   let navActive = null, footerTop = 1e9;
   function renderNav(sec, line) {
-    const id = line >= footerTop ? 'kontakt' : (NAV_OF[sec] || null);
+    const id = line >= footerTop ? 'wycena' : (NAV_OF[sec] || null);
     if (id === navActive) return;
     navActive = id;
     navLinks.forEach(a => { if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });

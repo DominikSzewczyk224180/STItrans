@@ -111,13 +111,23 @@ window.STI = (() => {
     const v = el.getAttribute(a);
     if (v && /[A-Za-zÀ-ž]/.test(v)) i18nAttrs.push({ el, a, pl: v });
   }));
+  // „e-commerce” nie łamie się na końcu wiersza na „e-” i „commerce”: niewidoczny łącznik słów po łączniku.
+  // Zmienia tylko wyświetlany tekst; klucze słownika (o.pl) i kod HTML dla wyszukiwarek zostają bez zmian.
+  const NOBR = s => s.replace(/([Ee])-(?=[Cc]ommerce)/g, '$1-\u2060');
+  i18nNodes.forEach(o => { o.n.nodeValue = NOBR(o.n.nodeValue); });
+  {
+    const w = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => (n.parentElement && n.parentElement.closest('[data-lang-block],[data-no-i18n]') && !n.parentElement.closest('script,style')) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+    });
+    while (w.nextNode()) { const n = w.currentNode; if (/-[Cc]ommerce/.test(n.nodeValue)) n.nodeValue = NOBR(n.nodeValue); }
+  }
   const metaDesc = document.querySelector('meta[name="description"]');
   const PL_TITLE = document.title, PL_DESC = metaDesc ? metaDesc.content : '';
 
   function applyTexts() {
     i18nNodes.forEach(o => {
-      if (LANG === 'pl') { o.n.nodeValue = o.en ? o.pl : orphanize(o.pl); return; }
-      o.n.nodeValue = has(o.key) ? o.lead + tr(o.key) + o.trail : o.pl;
+      if (LANG === 'pl') { o.n.nodeValue = NOBR(o.en ? o.pl : orphanize(o.pl)); return; }
+      o.n.nodeValue = NOBR(has(o.key) ? o.lead + tr(o.key) + o.trail : o.pl);
     });
     i18nAttrs.forEach(o => o.el.setAttribute(o.a, has(norm(o.pl)) ? tr(norm(o.pl)) : o.pl));
     document.title = has(PL_TITLE) ? tr(PL_TITLE) : PL_TITLE;
@@ -156,12 +166,13 @@ window.STI = (() => {
 
   // Grubość linii rysunków w px, niezależnie od skali SVG
   const strokeTargets = [];
-  const registerStroke = (svg, px) => strokeTargets.push({ svg, px });
+  // target i k: przeskalowana grupa wewnątrz rysunku (np. zestaw w scenie linii) dostaje grubość podzieloną przez skalę
+  const registerStroke = (svg, px, target, k) => strokeTargets.push({ svg, px, target: target || svg, k: k || 1 });
   function updateStrokes() {
-    strokeTargets.forEach(({ svg, px }) => {
+    strokeTargets.forEach(({ svg, px, target, k }) => {
       const vb = svg.viewBox.baseVal;
       const w = svg.getBoundingClientRect().width;
-      if (w && vb && vb.width) svg.style.setProperty('--sw', (px * vb.width / w).toFixed(2));
+      if (w && vb && vb.width) target.style.setProperty('--sw', (px * vb.width / w / k).toFixed(2));
     });
   }
 
@@ -284,6 +295,55 @@ window.STI = (() => {
   }
 
   // Bus do ekspresu, widok z boku; ziemia na y = 310
+  // Linie e-commerce: dwa centra logistyczne, trasa między nimi i zestaw w drodze.
+  // Zestaw to mniejszy rysunek ciężarówki w zagnieżdżonym SVG; place(k) przesuwa go od 0 do 1.
+  function buildLinehaul(svg, opt) {
+    const o = Object.assign({ at: 0.5, logoSrc: LOGO, px: 1.2 }, opt || {});
+    const g = svgEl('g', {}, svg);
+    const G = 372;                                            // poziom drogi
+    svgEl('path', { d: P.line(0, G, 1200, G), class: 'lh-ground' }, g);
+    const house = x => {
+      const w = 250, top = G - 150;
+      svgEl('path', { d: `M${x} ${G}V${top}L${x + w / 2} ${top - 58}L${x + w} ${top}V${G}`, class: 'lh-house' }, g);
+      svgEl('path', { d: P.line(x, top, x + w, top), class: 'lh-soft' }, g);
+      for (let i = 0; i < 3; i++) svgEl('path', { d: P.rect(x + 28 + i * 70, G - 92, 52, 92, 3), class: 'lh-door' }, g);
+      svgEl('path', { d: P.rect(x + w / 2 - 26, top - 30, 52, 14, 3), class: 'lh-sign' }, g);
+    };
+    house(20); house(930);
+    const route = svgEl('path', { d: `M300 ${G - 100}C520 ${G - 210} 690 ${G - 210} 910 ${G - 100}`, class: 'lh-route', pathLength: '1' }, g);
+    // zestaw: ten sam rysunek ciężarówki, pomniejszony; koła stoją na drodze
+    const K = 0.19, X0 = 282, X1 = 930 - 1700 * K - 12;
+    const box = svgEl('g', { class: 'lh-truck' }, g);
+    const truck = buildTruck(box, { pallets: 'full', ground: false, logoSrc: o.logoSrc });
+    registerStroke(svg, o.px, box, K);
+    const place = k => box.setAttribute('transform', `translate(${lerp(X0, X1, clamp(k)).toFixed(1)} ${(G - 400 * K).toFixed(1)}) scale(${K})`);
+    place(o.at);
+    return { route, box, place, truck };
+  }
+  // Szczyt sezonu: tygodniowe wolumeny rosną do szczytu przed świętami
+  function buildPeak(svg) {
+    const g = svgEl('g', {}, svg);
+    const base = 322, x0 = 70, w = 500, H = [64, 70, 68, 76, 82, 88, 98, 112, 130, 152, 188, 216, 198, 118], bw = w / H.length;
+    svgEl('path', { d: P.line(x0 - 24, base, x0 + w + 24, base), class: 'cv-floor' }, g);
+    H.forEach((h, i) => svgEl('path', {
+      d: P.rect(+(x0 + i * bw + 6).toFixed(1), base - h, +(bw - 12).toFixed(1), h, 4),
+      class: 'pk-bar' + (i >= 10 && i <= 12 ? ' pk-bar--peak' : ''), style: `--ci:${i}`
+    }, g));
+    const pts = H.map((h, i) => `${(x0 + i * bw + bw / 2).toFixed(1)} ${(base - h - 20).toFixed(1)}`);
+    svgEl('path', { d: 'M' + pts.join('L'), class: 'pk-line', pathLength: '1' }, g);
+    svgEl('circle', { cx: (x0 + 11 * bw + bw / 2).toFixed(1), cy: (base - H[11] - 20).toFixed(1), r: 8, class: 'pk-dot' }, g);
+  }
+  // Blok 5/2: pięć dni pracy i dwa dni wolne w jednym tygodniu
+  function buildWeek(svg) {
+    const g = svgEl('g', {}, svg);
+    const cw = 60, gap = 8, x0 = (640 - (7 * cw + 6 * gap)) / 2, top = 176, ch = 132;
+    svgEl('path', { d: P.line(x0 - 20, top + ch + 18, x0 + 7 * cw + 6 * gap + 20, top + ch + 18), class: 'cv-floor' }, g);
+    for (let i = 0; i < 7; i++) svgEl('path', { d: P.rect(x0 + i * (cw + gap), top, cw, ch, 10), class: 'wk-day' + (i < 5 ? ' wk-day--on' : ''), style: `--ci:${i}` }, g);
+    svgEl('path', { d: P.rect(x0, top - 30, 5 * cw + 4 * gap, 14, 7), class: 'wk-block' }, g);
+    const t = svgEl('text', { x: 320, y: 112, 'text-anchor': 'middle', class: 'cv-text' }, g);
+    t.textContent = '5/2';
+  }
+
   // Ekspres: ten sam zestaw (flota to wyłącznie ciągniki siodłowe z naczepami), pilny ładunek i linie prędkości
   function buildExpress(svg, opt) {
     const speed = [[-400, 140, -70], [-470, 205, -110], [-390, 270, -80]]
@@ -559,7 +619,7 @@ window.STI = (() => {
     BASE, root, body, RM, $, $$, clamp, lerp, easeOut, easeInOut, easeIn, damp, pageTop, lerpRect, DEG,
     NS, svgEl, P, uid, I18N, LANGS, PL_T, norm, orphanize, has, tr, fill, i18nHooks, srcText, applyTexts, setLang,
     lang: () => LANG, registerStroke, updateStrokes, LOGO, LOGO_W, WHEEL_R, WHEEL_Y,
-    buildTruck, buildVan, buildExpress, buildLoadPlan, buildCoils, buildStopwatch, EU, geo, CITY, buildMap, setPlaying,
+    buildTruck, buildVan, buildExpress, buildLinehaul, buildPeak, buildWeek, buildLoadPlan, buildCoils, buildStopwatch, EU, geo, CITY, buildMap, setPlaying,
     setMenu, splitWords, revealIO
   });
 })();
