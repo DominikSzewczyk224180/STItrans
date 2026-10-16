@@ -149,7 +149,7 @@ body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;opa
 .menu__lang{margin-top:16px;font-size:15px;gap:16px}
 
 /* ---------- 5. Hero ---------- */
-.hero{position:relative;height:470vh;background:var(--paper)}
+.hero{position:relative;height:calc(470vh + var(--lift,0px));background:var(--paper)}
 .stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;--title-ems:6.05}
 .hero__copy{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;padding:calc(var(--header-h) + env(safe-area-inset-top,0px) + 2vh) var(--pad) calc(var(--pad) * .8 + env(safe-area-inset-bottom,0px))}
 .hero__title{margin:0;font-family:var(--serif);font-weight:var(--serif-w-hero);font-variation-settings:var(--serif-vs);color:var(--ink);line-height:.94;letter-spacing:-.03em;
@@ -650,7 +650,7 @@ body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;opa
   .logo{height:34px}
   .site-header.is-scrolled .logo{transform:scale(.82)}
   .tools .btn--small{display:none}
-  .hero{height:440vh}
+  .hero{height:calc(440vh + var(--lift,0px))}
   .hero__foot{gap:16px}
   .hero__cta{justify-self:start}
   .glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(14,15,42,.72)}

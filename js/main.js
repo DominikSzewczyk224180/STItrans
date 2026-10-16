@@ -311,6 +311,13 @@
   const FADE = 0.03;
   let slotR = { x: 0, y: 0, w: 0, h: 0 }, slotRad = 0, SW = 1, SH = 1;
   let heroTop = 0, heroH = 1, padPx = 20;
+  // Podjazd: zanim okno zacznie się rozwijać, treść hero jedzie do góry,
+  // aż linia nad hasłem stanie tuż pod nagłówkiem (LIFT px przewinięcia)
+  let LIFT = 0;
+  const heroEyebrow = $('.hero__eyebrow');
+  const liftFrac = () => LIFT / Math.max(1, heroH - vh);
+  const liftOf = p => { const f = liftFrac(); return f > 0 ? clamp(p / f) * LIFT : 0; };
+  const heroQ = p => { const f = liftFrac(); return f > 0 ? clamp((p - f) / (1 - f)) : p; };
   let introT = 0, introRunning = false, introStart = 0;
   const heroS = { cur: 0, target: 0 };
 
@@ -340,11 +347,13 @@
     slotRad = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, r.height / 2);
   }
 
-  function renderHero(p) {
+  function renderHero(pRaw) {
+    const lift = liftOf(pRaw), p = heroQ(pRaw);
+    copy.style.transform = lift > 0.5 ? `translate3d(0,${(-lift).toFixed(1)}px,0)` : '';
     const pe = clamp(p / P_EXPAND), E = easeInOut(pe);
     const px = RM ? 0 : easeInOut(clamp((p - P_EXIT) / (1 - P_EXIT)));
     const full = { x: 0, y: 0, w: SW, h: SH };
-    let R0 = slotR;
+    let R0 = lift > 0.5 ? { x: slotR.x, y: slotR.y - lift, w: slotR.w, h: slotR.h } : slotR;
     if (introT < 1) {   // okno otwiera się w haśle po preloaderze
       const e = easeOut(introT), w = slotR.w * e, h = Math.min(slotR.h, w);
       R0 = { x: slotR.x + (slotR.w - w) / 2, y: slotR.y + (slotR.h - h) / 2, w, h };
@@ -880,7 +889,7 @@
     }
     busy = follow(heroS, clamp((y - heroTop) / Math.max(1, heroH - vh)), 9 * DK, dt) || busy;
     if (near(heroTop, heroH, y)) renderHero(heroS.cur);
-    headerState(y, heroS.cur);
+    headerState(y, heroQ(heroS.cur));
     headerAutoHide(y);
     renderRail(y);
 
@@ -904,10 +913,16 @@
   function measure() {
     vw = window.innerWidth; vh = window.innerHeight;
     headerH = header.offsetHeight;
-    heroTop = pageTop(hero); heroH = hero.offsetHeight;
     padPx = parseFloat(getComputedStyle(copy).paddingLeft) || 20;
+    copy.style.transform = '';
     fitTitle();
     measureSlot();
+    if (heroEyebrow) {
+      const sr = stage.getBoundingClientRect(), er = heroEyebrow.getBoundingClientRect();
+      LIFT = Math.max(0, Math.round(er.top - sr.top - (headerH + 18)));
+      hero.style.setProperty('--lift', LIFT + 'px');
+    }
+    heroTop = pageTop(hero); heroH = hero.offsetHeight;
     stTop = pageTop(stSec); stH = stSec.offsetHeight;
     fleetTop = pageTop(fleetSec); fleetH = fleetSec.offsetHeight;
     const fb = fleetSvg.getBoundingClientRect();
